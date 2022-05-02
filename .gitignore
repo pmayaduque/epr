@@ -1,2 +1,5 @@
 
 *.ini
+*.bak
+*.xlsx
+data/Instancia_new.xls
