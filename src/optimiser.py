@@ -7,6 +7,7 @@ Created on Mon May  2 16:09:13 2022
 
 from pyomo.environ import *
 from pyomo.opt import *
+import time
 
 
 def create_model():
@@ -35,10 +36,11 @@ def create_model():
     model.vma = Param(within=NonNegativeReals, mutable = True)                       # Valor de una unidad de material recuperado (ahorro para la ORP)
     model.O = Param(within=PositiveReals)                         # Número máximo de COLLECTIONS a abrir
     model.P = Param(within=PositiveReals)                         # Número máximo de TRANSFORMERS a abrir
-    model.rc1 = Param(model.COLLECTIONS, within=NonNegativeReals)
-    model.rc2 = Param(model.TRANSFORMERS, within=NonNegativeReals)
+    model.r_cc = Param(model.COLLECTIONS, within=NonNegativeReals)
+    model.r_tp = Param(model.TRANSFORMERS, within=NonNegativeReals)
     model.ec = Param(within=PositiveReals) 
-    model.at = Param(model.SIZES, within=PositiveReals) 
+    # TODO: is there a single set of areas for both cc and tp
+    model.area = Param(model.SIZES, within=PositiveReals) 
     model.alfa = Param(within=NonNegativeReals, mutable = True)                    # Porcentaje para balance
     model.ft = Param(within=PositiveReals, mutable = True)                         # Factor de transformacion 
 
@@ -49,24 +51,60 @@ def create_model():
                 domain=NonNegativeReals, bounds=(0,1))          # Variable de asignación ZONES - COLLECTIONS - TRANSFORMERS
     model.w = Var(model.ZONES, model.TRANSFORMERS, 
                 domain=NonNegativeReals, bounds=(0,1))          # Variable de asignación ZONES - TRANSFORMERS
-    model.CT = Var(domain=NonNegativeReals)                       # Costo total de transporte
-    model.ES = Var(domain=NonNegativeReals)                       # Egresos del sistema desde la óptica de la ORP
-    model.IS = Var(domain=NonNegativeReals)                       # Ingresos del sistema desde la óptica de la ORP
-               # Ingreso del sistema para la Orp
-    model.CA = Var(domain=NonNegativeReals) # Costo de apertura de instalaciones
-    model.f = Var(model.COLLECTIONS, domain=NonNegativeReals)   # Costo apertura COLLECTIONS
-    model.g = Var(model.TRANSFORMERS, domain=NonNegativeReals)   # Costo apertura TRANSFORMERS
     model.R = Var(model.ZONES, domain=NonNegativeReals) # Porcentaje de recuperado en cada zona
     model.Rmin = Var(domain=NonNegativeReals) # Porcentaje mínimo recuperado en cada zona
     model.Rmax = Var(domain=NonNegativeReals) # Porcentaje máximo recuperado en cada zona
+    model.TranspCost = Var(domain=NonNegativeReals)                       # Costo total de transporte
+    model.InfrasCost = Var(domain=NonNegativeReals) # Costo de apertura de instalaciones
+    
+    
+    model.ES = Var(domain=NonNegativeReals)                       # Egresos del sistema desde la óptica de la ORP
+    model.Income = Var(domain=NonNegativeReals)                       # Ingresos del sistema desde la óptica de la ORP
+               # Ingreso del sistema para la Orp
+    
+    model.f = Var(model.COLLECTIONS, domain=NonNegativeReals)   # Costo apertura COLLECTIONS
+    model.g = Var(model.TRANSFORMERS, domain=NonNegativeReals)   # Costo apertura TRANSFORMERS
+    
 
     # Objective function
     def obj_rule(model):
-            return (model.IS - model.ES 
+            return (model.Income - model.ES 
                     - 0.001*sum(model.y[j,m]*model.CAP[m] for m in model.SIZES for j in model.COLLECTIONS)
                     - 0.001*sum(model.z[k,m]*model.CAP[m] for m in model.SIZES for k in model.TRANSFORMERS))
     model.obj_funct = Objective(sense=maximize, rule=obj_rule) 
-
+    
+    # System income
+    def system_income_rule(model):
+        return (model.vma * (1 + model.ft) * sum(model.QMR[i] * (1 - model.tr[i]) * (
+                    sum(model.w[i,k] for k in model.TRANSFORMERS) +
+                    sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS)
+                    ) for i in model.ZONES) + 
+                model.vd * (
+                    sum((model.genQ[i] - model.QMR[i]) for i in model.ZONES) +
+                    sum(model.QMR[i] * (1 - (sum(model.w[i,k] for k in model.TRANSFORMERS) +
+                    sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS))
+                    ) for i in model.ZONES))) == model.Income
+    model.ct_income = Constraint(rule=system_income_rule)
+    
+    # Infraestructure cost
+    def open_cost_rule(model):
+        return (sum(model.f[j]* model.TA[j] * sum(model.y[j,m] for m in model.SIZES) for j in model.COLLECTIONS) + 
+                sum(model.g[k]* model.TT[k] * sum(model.z[k,m] for m in model.SIZES) for k in model.TRANSFORMERS)) == model.InfrasCost
+    model.cost_or = Constraint(rule=open_cost_rule)
+    
+    # Transport cost
+    def transport_cost_rule(model):
+        return (
+                sum(model.QMR[i]* (1 - model.tr[i]) * sum(model.x[i,j,k] * model.ct[j,k] 
+                                    for k in model.TRANSFORMERS 
+                                    for j in model.COLLECTIONS if model.TA[j] == 1) for i in model.ZONES) + 
+                sum(model.QMR[i]* (1 - model.tr[i]) * sum(model.x[i,j,k] * model.ct[j,k] * model.TT[k]
+                                    for k in model.TRANSFORMERS 
+                                    for j in model.COLLECTIONS if model.TA[j] == 0) for i in model.ZONES)
+        ) == model.TranspCost
+    model.ct_tranportCost = Constraint(rule=transport_cost_rule)
+     
+    
     # Allocation constraint
     def allocation_rule(model, i):
         return (sum(model.w[i,k] for k in model.TRANSFORMERS) +
@@ -96,23 +134,10 @@ def create_model():
                 ) for i in model.ZONES) >= model.MA
     model.min_material = Constraint(rule=minimum_material_rule)
     
-    # Transport cost
-    def transport_cost_rule(model):
-        return (
-                sum(model.QMR[i]* (1 - model.tr[i]) * sum(model.x[i,j,k] * model.ct[j,k] 
-                                    for k in model.TRANSFORMERS 
-                                    for j in model.COLLECTIONS if model.TA[j] == 1) for i in model.ZONES) + 
-                sum(model.QMR[i]* (1 - model.tr[i]) * sum(model.x[i,j,k] * model.ct[j,k] * model.TT[k]
-                                    for k in model.TRANSFORMERS 
-                                    for j in model.COLLECTIONS if model.TA[j] == 0) for i in model.ZONES)
-        ) == model.CT
-    model.costs_ct = Constraint(rule=transport_cost_rule)
     
-    # Infraestructure cost
-    def open_cost_rule(model):
-        return (sum(model.f[j]* model.TA[j] * sum(model.y[j,m] for m in model.SIZES) for j in model.COLLECTIONS) + 
-                sum(model.g[k]* model.TT[k] * sum(model.z[k,m] for m in model.SIZES) for k in model.TRANSFORMERS)) == model.CA
-    model.cost_or = Constraint(rule=open_cost_rule)
+    
+    
+
     
     def open_depot_capacity_rule(model, j):
         return (sum(model.y[j,m] for m in model.SIZES) <= 1)
@@ -123,7 +148,7 @@ def create_model():
     model.open_recpl_capacity = Constraint(model.TRANSFORMERS, rule=open_recpl_capacity_rule)
     
     def system_costs_rule(model):
-        return ((model.CT + model.CA + model.vd * sum(model.QMR[i] * ( 
+        return ((model.TranspCost + model.InfrasCost + model.vd * sum(model.QMR[i] * ( 
             sum(model.w[i,k] for k in model.TRANSFORMERS if model.TT[k] == 1 ) + 
             sum(model.x[i,j,k] * model.TA[j] for k in model.TRANSFORMERS for j in model.COLLECTIONS)) 
             for i in model.ZONES ) + 
@@ -140,18 +165,7 @@ def create_model():
                     <= model.ES)
     model.costs_es = Constraint(rule=system_costs_rule)
     
-    def system_income_rule(model):
-        return (model.vma * (1 + model.ft) * sum(model.QMR[i] * (1 - model.tr[i]) * (
-                    sum(model.w[i,k] for k in model.TRANSFORMERS) +
-                    sum(model.x[i,j,k] for k in model.TRANSFORMERS 
-                        for j in model.COLLECTIONS)
-                    ) for i in model.ZONES) + 
-                model.vd * (
-                    sum((model.genQ[i] - model.QMR[i]) for i in model.ZONES) +
-                    sum(model.QMR[i] * (1 - (sum(model.w[i,k] for k in model.TRANSFORMERS) +
-                    sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS))
-                    ) for i in model.ZONES))) == model.IS
-    model.income_is = Constraint(rule=system_income_rule)
+
     
     def max_depot_rule(model):
         return sum(model.y[j, m] for m in model.SIZES for j in model.COLLECTIONS) <= model.O
@@ -174,11 +188,11 @@ def create_model():
     model.flow3 = Constraint(model.ZONES, model.TRANSFORMERS, rule = flow_rule3)
     #New
     def open_cost_rule1(model, j):
-        return (model.rc1[j] * sum(model.at[m] * model.y[j,m] for m in model.SIZES) == model.f[j])
+        return (model.r_cc[j] * sum(model.area[m] * model.y[j,m] for m in model.SIZES) == model.f[j])
     model.cost_or1 = Constraint(model.COLLECTIONS, rule=open_cost_rule1)
     
     def open_cost_rule2(model, k):
-        return (model.ec + model.rc2[k] * sum(model.at[m]*model.z[k,m] for m in model.SIZES) == model.g[k])
+        return (model.ec + model.r_tp[k] * sum(model.area[m]*model.z[k,m] for m in model.SIZES) == model.g[k])
     model.cost_or2 = Constraint(model.TRANSFORMERS, rule=open_cost_rule2)
     
     def rec_by_zone_rule1(model, i):
@@ -205,3 +219,29 @@ def create_model():
     
     
     return model
+
+def solve_instance(instance,
+                optimizer='gurobi',
+                mipgap=0.02,
+                tee=True):
+    solver = SolverFactory(optimizer)
+    solver.options['MIPGap'] = mipgap
+    timea = time.time()
+    results = solver.solve(instance, tee = tee)
+    term_cond = results.solver.termination_condition
+    #s_status = results.solver.status
+    term = {}
+    # TODO: Check which other termination conditions may be interesting for us 
+    # http://www.pyomo.org/blog/2015/1/8/accessing-solver
+    #status {aborted, unknown}, Termination Condition {maxTimeLimit (put), locallyOptimal, maxEvaluations, licesingProblem}
+    if term_cond != TerminationCondition.optimal:
+          term['Temination Condition'] = format(term_cond)
+          execution_time = time.time() - timea
+          term['Execution time'] = execution_time
+          raise RuntimeError("Optimization failed.")
+
+    else: 
+          term['Temination Condition'] = format(term_cond)
+          execution_time = time.time() - timea
+          term['Execution time'] = execution_time    
+    return results, term

@@ -21,3 +21,8 @@ data = read_data(data_filepath)
     
 model = opt.create_model()
 instance = model.create_instance(data)
+
+results, termination = opt.solve_instance(instance, 
+                       optimizer = 'gurobi',
+                       mipgap = 0.01,
+                       tee = True)
