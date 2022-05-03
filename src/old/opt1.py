@@ -4,11 +4,27 @@ Created on Wed Mar 24 11:00:03 2021
 
 @author: Jesus Galarcio
 """
-from pyomo.environ import *
+import pyomo.environ as pyo
 from pyomo.opt import *
 
 
-def create_model(model_name):
+def create_model():
+    # Crear modelo
+    model = AbstractModel(model_name)
+
+    # Sets
+    model.ZONES = Set(ordered = False)                            # Zonas generadoras de MPA "i"
+    model.COLLECTIONS = Set(ordered = False)                             # Zonas potenciales para ubicar depósitos de C & A "j"
+    model.TRANSFORMERS = Set(ordered = False)                            # Zonas potenciales para ubicar depósitos de C, A & T "k"
+    model.SIZES = Set(ordered = False)                         # Conjunto de tamaños según la capacidad "m"
+
+    # Parameters
+    model.zone_gen = Param(model.Zonas, within=NonNegativeReals)       # Cantidad real de material generado en la zona i
+    
+    return model
+
+
+def create_modelT(model_name):
     # Crear modelo
     model = AbstractModel(model_name)
 
