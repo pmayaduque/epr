@@ -45,5 +45,13 @@ class Experiment:
                 self.df_results = self.df_results.append(dict_results, ignore_index = True)
 
 
+    def create_graph(self, filepath=None):
+        if filepath != None:
+            try:
+                self.df_results = pd.read_csv(filepath)
+            except:
+                print("There is not a file with the given path")
+        print(len(self.df_results))
+                
             
            
