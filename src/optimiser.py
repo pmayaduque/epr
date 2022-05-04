@@ -231,21 +231,10 @@ def solve_instance(instance,
           term['Execution time'] = execution_time    
     return results, term
 
+
 class Results():
-    def __init__(self, instance):
-        # general descriptives
-        self.solution = {}
-        self.solution['OF_value'] = instance.obj_funct.expr()
-        self.solution['cost_infraest'] = value(instance.InfrasCost)
-        self.solution['cost_transport'] = value(instance.TranspCost)
-        self.solution['cost_acquis'] = value(instance.AcquisCost)
-        self.solution['y'] = [(key, value) for key, value in instance.y.get_values().items() if value > 0]
-        self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
-        self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
-        self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
-        self.solution['Rmax'] = value(instance.Rmax) 
-        self.solution['Rmim'] = value(instance.Rmin) 
-        
+    def __init__(self, instance, termination):
+        # general descriptives        
         self.instance_data = {}
         self.instance_data['ind_income'] = value(instance.ind_income)
         self.instance_data['genQ'] = [(k, value(v)) for k, v in instance.genQ.items()]
@@ -265,5 +254,32 @@ class Results():
         self.instance_data['r_tp'] = [(k, value(v)) for k, v in instance.r_tp.items()]
         self.instance_data['area'] = [(k, value(v)) for k, v in instance.area.items()]
       
-        
+        self.solution = {}
+        if termination['Temination Condition'] == 'optimal':
+            self.solution['temination'] = 'optimal'
+            self.solution['OF_value'] = instance.obj_funct.expr()
+            self.solution['cost_infraest'] = value(instance.InfrasCost)
+            self.solution['cost_transport'] = value(instance.TranspCost)
+            self.solution['cost_acquis'] = value(instance.AcquisCost)
+            self.solution['y'] = [(key, value) for key, value in instance.y.get_values().items() if value > 0]
+            self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
+            self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
+            self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
+            self.solution['Rmax'] = value(instance.Rmax) 
+            self.solution['Rmim'] = value(instance.Rmin) 
+        else:
+            self.solution['temination'] = 'no-optimal'
+            self.solution['OF_value'] = None
+            self.solution['cost_infraest'] = None
+            self.solution['cost_transport'] = None
+            self.solution['cost_acquis'] = None
+            self.solution['y'] = None
+            self.solution['z'] = None
+            self.solution['x'] = None
+            self.solution['w'] = None
+            self.solution['Rmax'] = None
+            self.solution['Rmim'] = None
+
+    
+    
         
