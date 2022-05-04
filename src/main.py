@@ -24,5 +24,8 @@ instance = model.create_instance(data)
 
 results, termination = opt.solve_instance(instance, 
                        optimizer = 'gurobi',
-                       mipgap = 0.01,
+                       mipgap = 0.002,
                        tee = True)
+
+if termination['Temination Condition'] == 'optimal': 
+   model_results = opt.Results(instance) 

@@ -30,6 +30,8 @@ def read_data(data_path):
                 #data_read[key] = {tuple(ast.literal_eval(k)): v for k, v in value.items()}
         else:
             data_read[key] = {None: value}    
+    #compute QMR based in genQ and te
+    data_read['QMR'] = {i: data_read['genQ'][i]*data_read['te'][i] for i in data_read['ZONES'][None]}
     data_model = {None: data_read }
     #data_model[None] = data_read
     
