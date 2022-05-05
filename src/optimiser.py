@@ -24,8 +24,8 @@ def create_model():
     # Parameters
     model.genQ = Param(model.ZONES, within=NonNegativeReals, mutable = True)       # Cantidad real de material generado en la zona i
    
-    model.te = Param(model.ZONES, within=NonNegativeReals, mutable = True)        # Tasa efectiva de recuperación sobre el genQ en la zona i
-    model.tr = Param(model.ZONES, within=NonNegativeReals, mutable = True)        # Tasa de rechazo sobre el QMR en la zona i
+    model.te = Param(within=NonNegativeReals, mutable = True)        # Tasa efectiva de recuperación sobre el genQ en la zona i
+    model.tr = Param(within=NonNegativeReals, mutable = True)        # Tasa de rechazo sobre el QMR en la zona i
     model.QMR = Param(model.ZONES, within=NonNegativeReals, mutable = True)         # Material con potencial de recup. en la zona i (QMR_i=genQ_i*tr_i)
     model.CAP = Param(model.SIZES, within=NonNegativeReals, mutable = True)        # 
     model.MA = Param(within=NonNegativeReals, mutable = True)                    # Cantidad mínima que el sistema debe aprovechar 
@@ -73,7 +73,7 @@ def create_model():
     
     # System income
     def system_income_rule(model):
-        return (model.vma * (1 + model.ft) * sum(model.QMR[i] * (1 - model.tr[i]) * (
+        return (model.vma * (1 + model.ft) * sum(model.QMR[i] * (1 - model.tr) * (
                     sum(model.w[i,k] for k in model.TRANSFORMERS) +
                     sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS)
                     ) for i in model.ZONES) + 
@@ -94,10 +94,10 @@ def create_model():
     # Transport cost
     def transport_cost_rule(model):
         return (
-                sum(model.QMR[i]* (1 - model.tr[i]) * sum(model.x[i,j,k] * model.ct[j,k] 
+                sum(model.QMR[i]* (1 - model.tr) * sum(model.x[i,j,k] * model.ct[j,k] 
                                     for k in model.TRANSFORMERS 
                                     for j in model.COLLECTIONS if model.TA[j] == 1) for i in model.ZONES) + 
-                sum(model.QMR[i]* (1 - model.tr[i]) * sum(model.x[i,j,k] * model.ct[j,k] * model.TT[k]
+                sum(model.QMR[i]* (1 - model.tr) * sum(model.x[i,j,k] * model.ct[j,k] * model.TT[k]
                                     for k in model.TRANSFORMERS 
                                     for j in model.COLLECTIONS if model.TA[j] == 0) for i in model.ZONES)
         ) == model.TranspCost
@@ -106,19 +106,19 @@ def create_model():
     # Acquisition cost 
     def acquisition_costs_rule(model):
         return (model.vd*(sum(model.QMR[i]*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==0))+
-                model.vma*(sum(model.QMR[i]*(1-model.tr[i])*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==1))+
+                model.vma*(sum(model.QMR[i]*(1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==1))+
                 model.vd*(sum(model.QMR[i]*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vma*(1+model.ft)*(sum(model.QMR[i]*(1-model.tr[i])*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==0))+
+                model.vma*(1+model.ft)*(sum(model.QMR[i]*(1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==0))+
                 model.vd*(sum(model.QMR[i]*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vma*(1+model.ft)*sum((model.QMR[i]*(1-model.tr[i])*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==0))
+                model.vma*(1+model.ft)*sum((model.QMR[i]*(1-model.tr)*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==0))
                 == model.AcquisCost)
     model.ct_AcquisCost = Constraint(rule=acquisition_costs_rule)
     
     # Transformation cost 
     def transformation_costs_rule(model):
         return (model.vma*model.ft*model.fop*(
-            sum(model.QMR[i]*(1-model.tr[i])*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS for k in model.TRANSFORMERS if model.TT[k]==1) +
-            sum(model.QMR[i]*(1-model.tr[i])*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1 ))
+            sum(model.QMR[i]*(1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS for k in model.TRANSFORMERS if model.TT[k]==1) +
+            sum(model.QMR[i]*(1-model.tr)*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1 ))
                
                 == model.TransfCost)
     model.ct_TransfCost = Constraint(rule=transformation_costs_rule)
@@ -166,20 +166,20 @@ def create_model():
     
     # Facility capacity
     def capacity_rule1(model, j):
-        return (sum(model.QMR[i] * (1 - model.tr[i]) * sum(model.x[i,j,k] for k in model.TRANSFORMERS) 
+        return (sum(model.QMR[i] * (1 - model.tr) * sum(model.x[i,j,k] for k in model.TRANSFORMERS) 
                 for i in model.ZONES) <= sum(model.CAP[m] * model.y[j,m] for m in model.SIZES) )
     model.capacity_depot = Constraint(model.COLLECTIONS, rule=capacity_rule1)
     
     def capacity_rule2(model, k):
-        return (sum(model.QMR[i] * (1 - model.tr[i]) * model.w[i,k] for i in model.ZONES) + sum(model.QMR[i] * 
-             (1 - model.tr[i]) * sum(model.x[i,j,k] 
+        return (sum(model.QMR[i] * (1 - model.tr) * model.w[i,k] for i in model.ZONES) + sum(model.QMR[i] * 
+             (1 - model.tr) * sum(model.x[i,j,k] 
              for j in model.COLLECTIONS) for i in model.ZONES) <= 
             sum(model.CAP[m] * model.z[k,m] for m in model.SIZES))
     model.capacity_recpl = Constraint(model.TRANSFORMERS, rule=capacity_rule2)
     
     # System recoverable goal
     def minimum_material_rule(model):
-        return sum(model.QMR[i] * (1 - model.tr[i]) * (
+        return sum(model.QMR[i] * (1 - model.tr) * (
                 sum(model.w[i,k] for k in model.TRANSFORMERS) + 
                 sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS)
                 ) for i in model.ZONES) >= model.MA
@@ -187,7 +187,7 @@ def create_model():
     
     # Balance between zones    
     def rec_by_zone_rule1(model, i):
-        return ((model.QMR[i]*(1 - model.tr[i])*
+        return ((model.QMR[i]*(1 - model.tr)*
                  (sum(model.w[i,k] for k in model.TRANSFORMERS)+
                   sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS))
                  ) == model.R[i]
@@ -244,8 +244,8 @@ class Results():
         self.instance_data = {}
         self.instance_data['ind_income'] = value(instance.ind_income)
         self.instance_data['genQ'] = [(k, value(v)) for k, v in instance.genQ.items()]
-        self.instance_data['te'] = [(k, value(v)) for k, v in instance.te.items()]
-        self.instance_data['tr'] = [(k, value(v)) for k, v in instance.tr.items()]
+        self.instance_data['te'] = value(instance.te)
+        self.instance_data['tr'] = value(instance.tr)
         self.instance_data['QMR'] = [(k, value(v)) for k, v in instance.QMR.items()]
         self.instance_data['CAP'] = [(k, value(v)) for k, v in instance.CAP.items()]
         self.instance_data['MA'] = value(instance.MA)
