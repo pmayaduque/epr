@@ -5,3 +5,4 @@ output_files/MG_PINF7.xlsx
 *.pyc
 src/Experimento_MG.xlsx
 src/old/Experimento_MG.xlsx
+src/experimento2.csv

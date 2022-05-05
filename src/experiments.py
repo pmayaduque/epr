@@ -8,6 +8,12 @@ Created on Wed May  4 09:21:13 2022
 import itertools
 import pandas as pd
 import optimiser as opt 
+import plotly.express as px
+import plotly.io as pio
+from plotly.offline import plot
+pio.renderers.default='browser'
+
+import seaborn as sns
 
 class Experiment:
     def __init__(self, instance, exp_design):
@@ -51,7 +57,23 @@ class Experiment:
                 self.df_results = pd.read_csv(filepath)
             except:
                 print("There is not a file with the given path")
-        print(len(self.df_results))
+        # df = self.df_results[self.df_results["vma"]==250000]        
+        df = self.df_results
+        print(df.shape)
+        #df = df["vma_vd"] = df["vma"].apply(lambda x: x[1])
+        fig = px.box(df, x="vd", y="OF_value")
+        fig.show()
+    
+    def create_graph1(self, filepath=None):
+        if filepath != None:
+            try:
+                self.df_results = pd.read_csv(filepath)
+            except:
+                print("There is not a file with the given path")
+            df = self.df_results[(self.df_results['vma']==250000) & (self.df_results['tr']==0.15)]
+            print(df.shape)
+        fig = sns.barplot(data= df, x="vd", y="OF_value", hue ='te' )
+        fig.show()
                 
             
            

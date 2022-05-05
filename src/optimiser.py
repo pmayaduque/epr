@@ -265,11 +265,13 @@ class Results():
             self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
             self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
             self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
+            self.solution['R_total'] = sum(instance.R.get_values().values()) 
             self.solution['Rmax'] = value(instance.Rmax) 
             self.solution['Rmim'] = value(instance.Rmin) 
         else:
             self.solution['temination'] = 'no-optimal'
             self.solution['OF_value'] = None
+            self.solution['R_total'] = sum(instance.R.get_values().values()) 
             self.solution['cost_infraest'] = None
             self.solution['cost_transport'] = None
             self.solution['cost_acquis'] = None
