@@ -229,7 +229,7 @@ def solve_instance(instance,
           term['Temination Condition'] = format(term_cond)
           execution_time = time.time() - timea
           term['Execution time'] = execution_time
-          raise RuntimeError("Optimization failed.")
+          #raise RuntimeError("Optimization failed.")
 
     else: 
           term['Temination Condition'] = format(term_cond)
