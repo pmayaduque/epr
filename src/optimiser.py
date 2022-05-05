@@ -18,7 +18,11 @@ def create_model():
     # Sets
     model.ZONES = Set(ordered = False)                            # ZONES generadoras de MPA "i"
     model.COLLECTIONS = Set(ordered = False)                             # ZONES potenciales para ubicar depósitos de C & A "j"
+    model.COLLECT_OUT = Set(ordered = False)
+    model.COLLECT_IN = Set(ordered = False)
     model.TRANSFORMERS = Set(ordered = False)                            # ZONES potenciales para ubicar depósitos de C, A & T "k"
+    model.TRANSF_OUT = Set(ordered = False)
+    model.TRANSF_IN = Set(ordered = False)
     model.SIZES = Set(ordered = False)                         # Conjunto de tamaños según la capacidad "m"
 
     # Parameters
@@ -28,10 +32,12 @@ def create_model():
     model.tr = Param(within=NonNegativeReals, mutable = True)        # Tasa de rechazo sobre el QMR en la zona i
     model.QMR = Param(model.ZONES, within=NonNegativeReals, mutable = True)         # Material con potencial de recup. en la zona i (QMR_i=genQ_i*tr_i)
     model.CAP = Param(model.SIZES, within=NonNegativeReals, mutable = True)        # 
+    model.collect_out_cap = Param(model.COLLECT_OUT, within=NonNegativeReals, mutable = True)
+    model.transfer_out_cap = Param(model.TRANSF_OUT, within=NonNegativeReals, mutable = True)
     model.MA = Param(within=NonNegativeReals, mutable = True)                    # Cantidad mínima que el sistema debe aprovechar 
     model.ct = Param(model.COLLECTIONS, model.TRANSFORMERS, within=NonNegativeReals)        # Costo de transportar material de j hasta k
-    model.TA = Param(model.COLLECTIONS, domain=Binary)                 # Binario que indica si un Acopio pertenece a la ORP o es público
-    model.TT =Param(model.TRANSFORMERS, domain=Binary)                # Binario que indica si un Transformador pertenece a la ORP o es público
+    #model.TA = Param(model.COLLECTIONS, domain=Binary)                 # Binario que indica si un Acopio pertenece a la ORP o es público
+    #model.TT =Param(model.TRANSFORMERS, domain=Binary)                # Binario que indica si un Transformador pertenece a la ORP o es público
     model.vd = Param(within=NonNegativeReals, mutable=True)                        # Valor del depósito por unidad de producto
     model.vma = Param(within=NonNegativeReals, mutable = True)                       # Valor de una unidad de material recuperado (ahorro para la ORP)
     model.O = Param(within=PositiveReals, mutable=True)                         # Número máximo de COLLECTIONS a abrir
