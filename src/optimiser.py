@@ -43,6 +43,7 @@ def create_model():
     model.area = Param(model.SIZES, within=PositiveReals) 
     model.alfa = Param(within=NonNegativeReals, mutable = True)                    # Porcentaje para balance
     model.ft = Param(within=PositiveReals, mutable = True)                         # Factor de transformacion 
+    model.fop= Param(within=PositiveReals, mutable = True)  # percentage of the valorization ft that is expend in transformation  
     model.ind_income = Param(within=Binary, initialize = 1, mutable = True)
     # Definir variables
     model.y = Var(model.COLLECTIONS, model.SIZES, domain=Binary)                      # Variable de apertura y tamaño de COLLECTIONS
@@ -58,6 +59,7 @@ def create_model():
     model.InfrasCost = Var(domain=NonNegativeReals) # Costo de apertura de instalaciones
     model.TranspCost = Var(domain=NonNegativeReals)                       # Costo total de transporte
     model.AcquisCost = Var(domain=NonNegativeReals)
+    model.TransfCost = Var(domain=NonNegativeReals) # Transformation cost
     model.Income = Var(domain=NonNegativeReals)                       # Ingresos del sistema desde la óptica de la ORP
     
     
