@@ -66,7 +66,7 @@ def create_model():
     
     # Objective function
     def obj_rule(model):
-            return (model.Income - (model.InfrasCost + model.TranspCost + model.AcquisCost) 
+            return (model.Income - (model.InfrasCost + model.TranspCost + model.AcquisCost + model.TransfCost) 
                     - 0.001*sum(model.y[j,m]*model.CAP[m] for m in model.SIZES for j in model.COLLECTIONS)
                     - 0.001*sum(model.z[k,m]*model.CAP[m] for m in model.SIZES for k in model.TRANSFORMERS))
     model.obj_funct = Objective(sense=maximize, rule=obj_rule) 
@@ -105,14 +105,23 @@ def create_model():
     
     # Acquisition cost 
     def acquisition_costs_rule(model):
-        return (model.vd*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==0))+
-                model.vma*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vd*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vma*(1+model.ft)*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==0))+
-                model.vd*(sum(model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vma*(1+model.ft)*(sum(model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==0))
+        return (model.vd*(sum(model.QMR[i]*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==0))+
+                model.vma*(sum(model.QMR[i]*(1-model.tr[i])*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==1))+
+                model.vd*(sum(model.QMR[i]*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==1))+
+                model.vma*(1+model.ft)*(sum(model.QMR[i]*(1-model.tr[i])*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==0))+
+                model.vd*(sum(model.QMR[i]*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1))+
+                model.vma*(1+model.ft)*sum((model.QMR[i]*(1-model.tr[i])*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==0))
                 == model.AcquisCost)
     model.ct_AcquisCost = Constraint(rule=acquisition_costs_rule)
+    
+    # Transformation cost 
+    def transformation_costs_rule(model):
+        return (model.vma*model.ft*model.fop*(
+            sum(model.QMR[i]*(1-model.tr[i])*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS for k in model.TRANSFORMERS if model.TT[k]==1) +
+            sum(model.QMR[i]*(1-model.tr[i])*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1 ))
+               
+                == model.TransfCost)
+    model.ct_TransfCost = Constraint(rule=transformation_costs_rule)
     
     # Constraints
     
