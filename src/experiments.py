@@ -25,6 +25,7 @@ class Experiment:
         self.df_results = pd.DataFrame()
         n_experiment = 0
         for comb in self.combinations:
+            print(comb)
             n_experiment += 1
             for idx in range(len(self.factors)):  
                 len_attr = len(getattr(instance, self.factors[idx]))

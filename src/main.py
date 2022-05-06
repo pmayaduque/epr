@@ -37,6 +37,13 @@ print(model_results.solution)
 # Runing experiments
 # set parameters to change and the given values
 
+exp_design= {'tr' : [0.15],
+             'te' : [0.15, 0.2, 0.25],
+             'vma' : [i for i in range(250000, 1000001, 50000)],
+             'vd' : [i for i in range(0, 1000001, 50000)],
+             'MA' : [0, 0.10, 0.15, 0.20],
+             'ft': [0.25, 0.50, 0.75]             
+        }
 '''
 exp_design= {'tr' : [{1: 0.15, 2: 0.15, 3: 0.15, 4: 0.15}],
              'te' : [{1: i/100, 2: i/100, 3: i/100, 4: i/100} for i in range(15, 100, 20)],
@@ -59,10 +66,9 @@ exp_design= {'te' : [{1: i/100, 2: i/100, 3: i/100, 4: i/100} for i in range(15,
     }
 
 
-
+'''
 # Run the experiment
 experiment1 = Experiment(instance, exp_design)
 
 # Create graphs
 experiment1.create_graph("../output_files/experiment1.csv")
-'''

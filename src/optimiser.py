@@ -191,7 +191,7 @@ def create_model():
     def minimum_material_rule(model):
         return sum((1 - model.tr) * (
                 sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS)
-                ) for i in model.ZONES) >= model.MA
+                ) for i in model.ZONES) >= model.MA*sum(model.genQ[i] for i in model.ZONES)
     model.min_material = Constraint(rule=minimum_material_rule)
     
     
@@ -284,14 +284,14 @@ class Results():
         else:
             self.solution['temination'] = 'no-optimal'
             self.solution['OF_value'] = None
-            self.solution['R_total'] = sum(instance.R.get_values().values()) 
             self.solution['cost_infraest'] = None
             self.solution['cost_transport'] = None
             self.solution['cost_acquis'] = None
             self.solution['y'] = None
             self.solution['z'] = None
             self.solution['x'] = None
-            #self.solution['w'] = None
+            #self.solution['w'] = None            
+            self.solution['R_total'] = None 
             self.solution['Rmax'] = None
             self.solution['Rmim'] = None
 
