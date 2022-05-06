@@ -51,13 +51,12 @@ def create_model():
     model.ft = Param(within=PositiveReals, mutable = True)                         # Factor de transformacion 
     model.fop= Param(within=PositiveReals, mutable = True)  # percentage of the valorization ft that is expend in transformation  
     model.ind_income = Param(within=Binary, initialize = 1, mutable = True)
+    
     # Definir variables
-    model.y = Var(model.COLLECTIONS, model.SIZES, domain=Binary)                      # Variable de apertura y tamaño de COLLECTIONS
-    model.z = Var(model.TRANSFORMERS, model.SIZES, domain=Binary)              # Variable de apertura y tamaño de TRANSFORMERS
-    model.x = Var(model.ZONES, model.COLLECTIONS, model.TRANSFORMERS,
-                domain=NonNegativeReals, bounds=(0,1))          # Variable de asignación ZONES - COLLECTIONS - TRANSFORMERS
-    model.w = Var(model.ZONES, model.TRANSFORMERS, 
-                domain=NonNegativeReals, bounds=(0,1))          # Variable de asignación ZONES - TRANSFORMERS
+    model.y = Var(model.COLLECT_IN, model.SIZES, domain=Binary)                      # Variable de apertura y tamaño de COLLECTIONS
+    model.z = Var(model.TRANSF_IN, model.SIZES, domain=Binary)              # Variable de apertura y tamaño de TRANSFORMERS
+    model.x = Var(model.ZONES, model.COLLECTIONS, model.TRANSFORMERS,domain=NonNegativeReals)          # Variable de asignación ZONES - COLLECTIONS - TRANSFORMERS
+    #model.w = Var(model.ZONES, model.TRANSFORMERS, domain=NonNegativeReals, bounds=(0,1))          # Variable de asignación ZONES - TRANSFORMERS
     model.R = Var(model.ZONES, domain=NonNegativeReals) # Porcentaje de recuperado en cada zona
     model.Rmin = Var(domain=NonNegativeReals) # Porcentaje mínimo recuperado en cada zona
     model.Rmax = Var(domain=NonNegativeReals) # Porcentaje máximo recuperado en cada zona
@@ -72,61 +71,47 @@ def create_model():
     
     # Objective function
     def obj_rule(model):
-            return (model.Income - (model.InfrasCost + model.TranspCost + model.AcquisCost + model.TransfCost) 
-                    - 0.001*sum(model.y[j,m]*model.CAP[m] for m in model.SIZES for j in model.COLLECTIONS)
-                    - 0.001*sum(model.z[k,m]*model.CAP[m] for m in model.SIZES for k in model.TRANSFORMERS))
+            return (model.Income - (model.InfrasCost + model.TranspCost + model.AcquisCost + model.TransfCost))
     model.obj_funct = Objective(sense=maximize, rule=obj_rule) 
     
     # System income
     def system_income_rule(model):
-        return (model.vma * (1 + model.ft) * sum(model.QMR[i] * (1 - model.tr) * (
-                    sum(model.w[i,k] for k in model.TRANSFORMERS) +
-                    sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS)
-                    ) for i in model.ZONES) + 
+        return (model.vma * (1 + model.ft) * 
+                sum((1 - model.tr) * model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS for j in model.COLLECTIONS) + 
                 model.vd * (
                     sum(model.genQ[i] for i in model.ZONES) -
-                    sum(model.QMR[i] * (sum(model.w[i,k] for k in model.TRANSFORMERS) +
-                    (sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS))
-                    ) for i in model.ZONES))) == model.Income
+                    sum(model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS for j in model.COLLECTIONS)
+                    )) == model.Income
     model.ct_income = Constraint(rule=system_income_rule)
     
     # Infraestructure cost
     def open_cost_rule(model):
-        return (sum(model.r_cc[j]*model.TA[j]*sum(model.area[s]*model.y[j,s] for s in model.SIZES) for j in model.COLLECTIONS) + 
-                sum(model.r_tp[k]*model.TT[k]*sum(model.area[s]*model.z[k,s] for s in model.SIZES) for k in model.TRANSFORMERS)
+        return (sum(model.r_cc[j]*sum(model.area[s]*model.y[j,s] for s in model.SIZES) for j in model.COLLECT_IN) + 
+                sum(model.r_tp[k]*sum(model.area[s]*model.z[k,s] for s in model.SIZES) for k in model.TRANSF_IN)
                 + model.ec) == model.InfrasCost
     model.cost_or = Constraint(rule=open_cost_rule)
     
     # Transport cost
     def transport_cost_rule(model):
         return (
-                sum(model.QMR[i]* (1 - model.tr) * sum(model.x[i,j,k] * model.ct[j,k] 
-                                    for k in model.TRANSFORMERS 
-                                    for j in model.COLLECTIONS if model.TA[j] == 1) for i in model.ZONES) + 
-                sum(model.QMR[i]* (1 - model.tr) * sum(model.x[i,j,k] * model.ct[j,k] * model.TT[k]
-                                    for k in model.TRANSFORMERS 
-                                    for j in model.COLLECTIONS if model.TA[j] == 0) for i in model.ZONES)
-        ) == model.TranspCost
+                sum((1 - model.tr) * model.x[i,j,k] * model.ct[j,k] 
+                    for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS) 
+                == model.TranspCost)
     model.ct_tranportCost = Constraint(rule=transport_cost_rule)
     
     # Acquisition cost 
     def acquisition_costs_rule(model):
-        return (model.vd*(sum(model.QMR[i]*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==0))+
-                model.vma*(sum(model.QMR[i]*(1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vd*(sum(model.QMR[i]*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==1 for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vma*(1+model.ft)*(sum(model.QMR[i]*(1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS if model.TA[j]==0 for k in model.TRANSFORMERS if model.TT[k]==0))+
-                model.vd*(sum(model.QMR[i]*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1))+
-                model.vma*(1+model.ft)*sum((model.QMR[i]*(1-model.tr)*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==0))
+        return (model.vd*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS ))+
+                model.vma*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_IN))+
+                model.vma*(1+model.ft)*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_OUT ))
                 == model.AcquisCost)
     model.ct_AcquisCost = Constraint(rule=acquisition_costs_rule)
     
     # Transformation cost 
     def transformation_costs_rule(model):
         return (model.vma*model.ft*model.fop*(
-            sum(model.QMR[i]*(1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS for k in model.TRANSFORMERS if model.TT[k]==1) +
-            sum(model.QMR[i]*(1-model.tr)*model.w[i,k] for i in model.ZONES for k in model.TRANSFORMERS if model.TT[k]==1 ))
-               
-                == model.TransfCost)
+            sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECTIONS for k in model.TRANSF_IN))
+            == model.TransfCost)
     model.ct_TransfCost = Constraint(rule=transformation_costs_rule)
     
     # Constraints
@@ -134,69 +119,87 @@ def create_model():
     # At most one facility in each location
     def open_depot_capacity_rule(model, j):
         return (sum(model.y[j,m] for m in model.SIZES) <= 1)
-    model.open_depot_capacity = Constraint(model.COLLECTIONS, rule=open_depot_capacity_rule)
+    model.open_depot_capacity = Constraint(model.COLLECT_IN, rule=open_depot_capacity_rule)
     
     def open_recpl_capacity_rule(model, k):
         return (sum(model.z[k,m] for m in model.SIZES) <= 1) 
-    model.open_recpl_capacity = Constraint(model.TRANSFORMERS, rule=open_recpl_capacity_rule)
+    model.open_recpl_capacity = Constraint(model.TRANSF_IN, rule=open_recpl_capacity_rule)
     
     # Maximum number of each facility
     def max_depot_rule(model):
-        return sum(model.y[j, m] for m in model.SIZES for j in model.COLLECTIONS) <= model.O
+        return sum(model.y[j, m] for m in model.SIZES for j in model.COLLECT_IN) <= model.O
     model.max_depot = Constraint(rule=max_depot_rule)
     
     def max_recpl_rule(model):
-        return sum(model.z[k, m] for m in model.SIZES for k in model.TRANSFORMERS)  <= model.P
+        return sum(model.z[k, m] for m in model.SIZES for k in model.TRANSF_IN)  <= model.P
     model.max_recpl = Constraint(rule=max_recpl_rule)    
     
     # Binary relation between opened facilities 
+
     def flow_rule1(model,i,j,k):
-        return model.x[i,j,k] <= sum(model.y[j,m] for m in model.SIZES)
-    model.flow1 = Constraint(model.ZONES, model.COLLECTIONS, model.TRANSFORMERS,rule = flow_rule1)
+        return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) *sum(model.y[j,m] for m in model.SIZES)
+    model.flow1 = Constraint(model.ZONES, model.COLLECT_IN, model.TRANSFORMERS,rule = flow_rule1)
     
     def flow_rule2(model,i,j,k):
-        return model.x[i,j,k] <= sum(model.z[k,m] for m in model.SIZES)
-    model.flow2 = Constraint(model.ZONES, model.COLLECTIONS, model.TRANSFORMERS, rule = flow_rule2)
+        return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) * sum(model.z[k,m] for m in model.SIZES)
+    model.flow2 = Constraint(model.ZONES, model.COLLECTIONS, model.TRANSF_IN, rule = flow_rule2)
     
     def flow_rule3(model,i,k):
         return model.w[i,k] <= sum(model.z[k,m] for m in model.SIZES)
-    model.flow3 = Constraint(model.ZONES, model.TRANSFORMERS, rule = flow_rule3)
+    #model.flow3 = Constraint(model.ZONES, model.TRANSFORMERS, rule = flow_rule3)
         
     # Maximum flow allowed (do not exced the generated capacity)
     def allocation_rule(model, i):
-        return (sum(model.w[i,k] for k in model.TRANSFORMERS) +
-                sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS)
-                <= 1
+        return (
+                sum(model.x[i,j,k] for j in model.COLLECTIONS for k in model.TRANSFORMERS )
+                <= model.QMR[i]
                 )
     model.allocation_zone = Constraint(model.ZONES, rule=allocation_rule)
     
-    # Facility capacity
-    def capacity_rule1(model, j):
-        return (sum(model.QMR[i] * (1 - model.tr) * sum(model.x[i,j,k] for k in model.TRANSFORMERS) 
-                for i in model.ZONES) <= sum(model.CAP[m] * model.y[j,m] for m in model.SIZES) )
-    model.capacity_depot = Constraint(model.COLLECTIONS, rule=capacity_rule1)
+   
+    # Collection capacity
+    def coll_cap_rule1(model, j):
+        return (
+                sum(model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS )
+                <= sum(model.CAP[s]*model.y[j,s] for s in model.SIZES)
+                )
+    model.coll_cap_rule1 = Constraint(model.COLLECT_IN, rule=coll_cap_rule1)
+
+    def coll_cap_rule2(model, j):
+        return (
+                sum(model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS )
+                <= model.collect_out_cap[j]
+                )
+    model.coll_cap_rule2 = Constraint(model.COLLECT_OUT, rule=coll_cap_rule2)
     
-    def capacity_rule2(model, k):
-        return (sum(model.QMR[i] * (1 - model.tr) * model.w[i,k] for i in model.ZONES) + sum(model.QMR[i] * 
-             (1 - model.tr) * sum(model.x[i,j,k] 
-             for j in model.COLLECTIONS) for i in model.ZONES) <= 
-            sum(model.CAP[m] * model.z[k,m] for m in model.SIZES))
-    model.capacity_recpl = Constraint(model.TRANSFORMERS, rule=capacity_rule2)
+    def trans_cap_rule1(model, k):
+        return (
+                sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES for j in model.COLLECTIONS )
+                <= sum(model.CAP[s]*model.z[k,s] for s in model.SIZES)
+                )
+    model.trans_cap_rule1 = Constraint(model.TRANSF_IN, rule=trans_cap_rule1)
     
+    def trans_cap_rule2(model, k):
+        return (
+                sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES for j in model.COLLECTIONS )
+                <= model.transfer_out_cap[k]
+                )
+    model.trans_cap_rule2 = Constraint(model.TRANSF_OUT, rule=trans_cap_rule2)
+
+   
     # System recoverable goal
     def minimum_material_rule(model):
-        return sum(model.QMR[i] * (1 - model.tr) * (
-                sum(model.w[i,k] for k in model.TRANSFORMERS) + 
+        return sum((1 - model.tr) * (
                 sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS)
                 ) for i in model.ZONES) >= model.MA
     model.min_material = Constraint(rule=minimum_material_rule)
     
+    
     # Balance between zones    
     def rec_by_zone_rule1(model, i):
-        return ((model.QMR[i]*(1 - model.tr)*
-                 (sum(model.w[i,k] for k in model.TRANSFORMERS)+
-                  sum(model.x[i,j,k] for k in model.TRANSFORMERS for j in model.COLLECTIONS))
-                 ) == model.R[i]
+        return (
+            sum((model.x[i,j,k]/model.QMR[i]) for j in model.COLLECTIONS for k in model.TRANSFORMERS)
+                == model.R[i]
                 )
     model.rec_by_zone1 = Constraint(model.ZONES, rule = rec_by_zone_rule1)
     
@@ -209,11 +212,9 @@ def create_model():
     model.rec_by_zone3 = Constraint(model.ZONES, rule = rec_by_zone_rule3)
     
     def rec_by_zone_rule4(model):
-        return (model.Rmax - model.Rmin <= model.alfa * 
-                sum(model.R[i] for i in model.ZONES)
+        return (model.Rmax - model.Rmin <= model.alfa
                 )
-    model.rec_by_zone4 = Constraint(rule = rec_by_zone_rule4)
-    
+    model.rec_by_zone4 = Constraint(rule = rec_by_zone_rule4)   
     
     return model
 
@@ -276,10 +277,10 @@ class Results():
             self.solution['y'] = [(key, value) for key, value in instance.y.get_values().items() if value > 0]
             self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
             self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
-            self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
+            #self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
             self.solution['R_total'] = sum(instance.R.get_values().values()) 
-            self.solution['Rmax'] = value(instance.Rmax) 
-            self.solution['Rmim'] = value(instance.Rmin) 
+            self.solution['Rmax'] = max(instance.R.get_values().values()) 
+            self.solution['Rmim'] = min(instance.R.get_values().values())  
         else:
             self.solution['temination'] = 'no-optimal'
             self.solution['OF_value'] = None
@@ -290,7 +291,7 @@ class Results():
             self.solution['y'] = None
             self.solution['z'] = None
             self.solution['x'] = None
-            self.solution['w'] = None
+            #self.solution['w'] = None
             self.solution['Rmax'] = None
             self.solution['Rmim'] = None
 
