@@ -266,6 +266,7 @@ class Results():
         self.instance_data['r_cc'] = [(k, value(v)) for k, v in instance.r_cc.items()]
         self.instance_data['r_tp'] = [(k, value(v)) for k, v in instance.r_tp.items()]
         self.instance_data['area'] = [(k, value(v)) for k, v in instance.area.items()]
+        self.instance_data['goalQ'] = value(instance.MA)*(sum(value(instance.genQ[i]) for i in instance.ZONES))
       
         self.solution = {}
         if termination['Temination Condition'] == 'optimal':
@@ -278,9 +279,13 @@ class Results():
             self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
             self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
             #self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
-            self.solution['R_total'] = sum(instance.R.get_values().values()) 
+            self.solution['R'] = instance.R.get_values() 
             self.solution['Rmax'] = max(instance.R.get_values().values()) 
-            self.solution['Rmim'] = min(instance.R.get_values().values())  
+            self.solution['Rmin'] = min(instance.R.get_values().values())
+            self.solution['Q_coll'] = sum(v for v in instance.x.get_values().values())
+            self.solution['Q_transf'] = self.solution['Q_coll']*value(1-instance.tr)
+            ratio = lambda x : self.solution['Q_transf']/x if (x > 0 ) else 1 
+            self.solution['goal_ratio'] = ratio(self.instance_data['goalQ'])
         else:
             self.solution['temination'] = 'no-optimal'
             self.solution['OF_value'] = None
@@ -291,9 +296,12 @@ class Results():
             self.solution['z'] = None
             self.solution['x'] = None
             #self.solution['w'] = None            
-            self.solution['R_total'] = None 
+            self.solution['R'] = None 
             self.solution['Rmax'] = None
-            self.solution['Rmim'] = None
+            self.solution['Rmin'] = None
+            self.solution['Q_transf'] = None
+            self.solution['Q_transf']= None
+            self.solution['goal_ratio'] = None
 
     
     
