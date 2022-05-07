@@ -9,6 +9,7 @@ import itertools
 import pandas as pd
 import optimiser as opt 
 import plotly.express as px
+import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.offline import plot
 pio.renderers.default='browser'
@@ -50,6 +51,7 @@ class Experiment:
                 self.df_results = self.df_results. append(dict_results, ignore_index = True)
             else: 
                 self.df_results = self.df_results.append(dict_results, ignore_index = True)
+        # TODO: move here creating "vd/vma"
 
 
     def create_graph(self, filepath=None):
@@ -57,12 +59,19 @@ class Experiment:
             try:
                 self.df_results = pd.read_csv(filepath)
             except:
-                print("There is not a file with the given path")
-        # df = self.df_results[self.df_results["vma"]==250000]        
+                print("There is not a file with the given path")   
+        self.df_results['vd/vma'] = round(100*self.df_results['vd']/self.df_results['vma'], 2)
         df = self.df_results
-        print(df.shape)
-        #df = df["vma_vd"] = df["vma"].apply(lambda x: x[1])
-        fig = px.box(df, x="vd", y="OF_value")
+        df_grouped = df.groupby(['te', 'MA', 'vd/vma'])['goal_ratio'].mean().reset_index()
+        df_grouped.sort_values(by=['vd/vma'])
+        pallete = px.colors.qualitative.Dark24
+        n_colors = len(pallete)
+        
+        df_filtered = df_grouped[df_grouped['te']==0.3]
+        fig = px.line(df_grouped, x='vd/vma', y='goal_ratio', animation_frame="MA", color='te')
+        #df_filtered = df_grouped[df_grouped['te']==0.5]
+        #fig2 = px.line(df_filtered, x='vd/vma', y='goal_ratio', animation_frame="MA")
+        #fig.add_trace(fig2.data[0])
         fig.show()
     
     def create_graph1(self, filepath=None):

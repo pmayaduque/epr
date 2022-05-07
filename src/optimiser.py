@@ -291,6 +291,7 @@ class Results():
             self.solution['Q_transf'] = self.solution['Q_coll']*value(1-instance.tr)
             ratio = lambda x : self.solution['Q_transf']/x if (x > 0 ) else 1 
             self.solution['goal_ratio'] = ratio(self.instance_data['goalQ'])
+            # TODO: QRM, income_vd, income_vma 
         else:
             self.solution['temination'] = 'no-optimal'
             self.solution['OF_value'] = None
