@@ -38,10 +38,10 @@ print(model_results.solution)
 # set parameters to change and the given values
 
 exp_design= {'tr' : [0.15],
-             'te' : [0.20],
-             'vma' : [i for i in range(250000, 1000001, 50000)],
-             'vd' : [i for i in range(0, 1000001, 50000)],
-             'MA' : [0, 0.10],
+             'te' : [0.30, 0.50, 1],
+             'vma' : [i for i in range(250000, 750001, 50000)],
+             'vd' : [i for i in range(0, 750001, 50000)],
+             'MA' : [0.10, 0.20],
              'ft': [0.25]             
         }
 '''

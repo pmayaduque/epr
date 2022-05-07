@@ -137,11 +137,13 @@ def create_model():
     # Binary relation between opened facilities 
 
     def flow_rule1(model,i,j,k):
-        return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) *sum(model.y[j,m] for m in model.SIZES)
+        return model.x[i,j,k] <= sum(model.genQ[i]*model.te for i in model.ZONES) *sum(model.y[j,m] for m in model.SIZES)
+        #return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) *sum(model.y[j,m] for m in model.SIZES)
     model.flow1 = Constraint(model.ZONES, model.COLLECT_IN, model.TRANSFORMERS,rule = flow_rule1)
     
     def flow_rule2(model,i,j,k):
-        return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) * sum(model.z[k,m] for m in model.SIZES)
+        return model.x[i,j,k] <= sum(model.genQ[i]*model.te for i in model.ZONES) * sum(model.z[k,m] for m in model.SIZES)
+        #return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) * sum(model.z[k,m] for m in model.SIZES)
     model.flow2 = Constraint(model.ZONES, model.COLLECTIONS, model.TRANSF_IN, rule = flow_rule2)
     
     def flow_rule3(model,i,k):
@@ -152,7 +154,8 @@ def create_model():
     def allocation_rule(model, i):
         return (
                 sum(model.x[i,j,k] for j in model.COLLECTIONS for k in model.TRANSFORMERS )
-                <= model.QMR[i]
+                <= model.genQ[i]*model.te
+                #<= model.QMR[i]
                 )
     model.allocation_zone = Constraint(model.ZONES, rule=allocation_rule)
     
@@ -198,7 +201,8 @@ def create_model():
     # Balance between zones    
     def rec_by_zone_rule1(model, i):
         return (
-            sum((model.x[i,j,k]/model.QMR[i]) for j in model.COLLECTIONS for k in model.TRANSFORMERS)
+            #sum((model.x[i,j,k]/model.QMR[i]) for j in model.COLLECTIONS for k in model.TRANSFORMERS)
+            sum((model.x[i,j,k]/model.genQ[i]*model.te) for j in model.COLLECTIONS for k in model.TRANSFORMERS)
                 == model.R[i]
                 )
     model.rec_by_zone1 = Constraint(model.ZONES, rule = rec_by_zone_rule1)
@@ -275,6 +279,7 @@ class Results():
             self.solution['cost_infraest'] = value(instance.InfrasCost)
             self.solution['cost_transport'] = value(instance.TranspCost)
             self.solution['cost_acquis'] = value(instance.AcquisCost)
+            self.solution['cost_transf'] = value(instance.TransfCost)            
             self.solution['y'] = [(key, value) for key, value in instance.y.get_values().items() if value > 0]
             self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
             self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
@@ -292,6 +297,7 @@ class Results():
             self.solution['cost_infraest'] = None
             self.solution['cost_transport'] = None
             self.solution['cost_acquis'] = None
+            self.solution['cost_transf'] = None
             self.solution['y'] = None
             self.solution['z'] = None
             self.solution['x'] = None
