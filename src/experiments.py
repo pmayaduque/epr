@@ -68,11 +68,15 @@ class Experiment:
         n_colors = len(pallete)
         
         df_filtered = df_grouped[df_grouped['te']==0.3]
-        fig = px.line(df_grouped, x='vd/vma', y='goal_ratio', animation_frame="MA", color='te')
-        #df_filtered = df_grouped[df_grouped['te']==0.5]
-        #fig2 = px.line(df_filtered, x='vd/vma', y='goal_ratio', animation_frame="MA")
-        #fig.add_trace(fig2.data[0])
-        fig.show()
+        fig = px.line(df_grouped, x='vd/vma', y='goal_ratio', animation_frame="MA", color='te',
+                      title = "Goal accomplishment vs ratio between deposit and material value",
+                      labels = {
+                          'te': 'recovery rate',
+                          'vd/vma': 'deposit/material value [$/Ton]',
+                          'goal_ratio': '% of goal accomplishment',
+                          'MA':'recovery goal'})
+                        
+        return fig
     
     def create_graph1(self, filepath=None):
         if filepath != None:
@@ -82,8 +86,9 @@ class Experiment:
                 print("There is not a file with the given path")
             df = self.df_results[(self.df_results['vma']==250000) & (self.df_results['tr']==0.15)]
             print(df.shape)
-        fig = sns.barplot(data= df, x="vd", y="OF_value", hue ='te' )
-        fig.show()
+        fig = sns.barplot(data= df, x="vd", y="OF_value", hue ='te', )
+        
+        return fig
                 
             
            

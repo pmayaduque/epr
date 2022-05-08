@@ -30,7 +30,7 @@ def create_model():
    
     model.te = Param(within=NonNegativeReals, mutable = True)        # Tasa efectiva de recuperación sobre el genQ en la zona i
     model.tr = Param(within=NonNegativeReals, mutable = True)        # Tasa de rechazo sobre el QMR en la zona i
-    model.QMR = Param(model.ZONES, within=NonNegativeReals, mutable = True)         # Material con potencial de recup. en la zona i (QMR_i=genQ_i*tr_i)
+    model.QMR = Param(model.ZONES, within=NonNegativeReals, initialize=0, mutable = True)         # Material con potencial de recup. en la zona i (QMR_i=genQ_i*tr_i)
     model.CAP = Param(model.SIZES, within=NonNegativeReals, mutable = True)        # 
     model.collect_out_cap = Param(model.COLLECT_OUT, within=NonNegativeReals, mutable = True)
     model.transfer_out_cap = Param(model.TRANSF_OUT, within=NonNegativeReals, mutable = True)
@@ -67,7 +67,7 @@ def create_model():
     model.TransfCost = Var(domain=NonNegativeReals) # Transformation cost
     model.Income = Var(domain=NonNegativeReals)                       # Ingresos del sistema desde la óptica de la ORP
     
-    
+   
     
     # Objective function
     def obj_rule(model):
@@ -257,7 +257,7 @@ class Results():
         self.instance_data['genQ'] = [(k, value(v)) for k, v in instance.genQ.items()]
         self.instance_data['te'] = value(instance.te)
         self.instance_data['tr'] = value(instance.tr)
-        self.instance_data['QMR'] = [(k, value(v)) for k, v in instance.QMR.items()]
+        self.instance_data['QMR'] = [(k, value(v)*value(instance.te)) for k, v in instance.genQ.items()]
         self.instance_data['CAP'] = [(k, value(v)) for k, v in instance.CAP.items()]
         self.instance_data['MA'] = value(instance.MA)
         self.instance_data['vd'] = value(instance.vd)
