@@ -39,10 +39,10 @@ print(model_results.solution)
 # set parameters to change and the given values
 
 exp_design= {'tr' : [0.15],
-             'te' : [0.20, 0.25],#, [0.15, 0.20, 0.25, 0.3], #[0.30, 0.50],
-             'vma' :[250000, 300000],#[i for i in range(250000, 1000001, 50000)],
-             'vd' : [200000, 250000],#[i for i in range(50000, 1000001, 50000)],
-             'MA' : [0.15]#,[i/100 for i in range(10, 17, 2)]
+             'te' : [0.15, 0.2, 0.3],#, [0.15, 0.20, 0.25, 0.3], #[0.30, 0.50],
+             'vma' :[i for i in range(250000, 750001, 50000)],
+             'vd' : [i for i in range(50000, 750001, 50000)],
+             'MA' : [i/100 for i in range(10, 31, 2)]
         }
 '''
 exp_design= {'tr' : [{1: 0.15, 2: 0.15, 3: 0.15, 4: 0.15}],
@@ -71,6 +71,6 @@ exp_design= {'te' : [{1: i/100, 2: i/100, 3: i/100, 4: i/100} for i in range(15,
 experiment1 = Experiment(instance, exp_design)
 
 # Create graphs
-fig = experiment1.create_graph(r"../output_files/Experiment1.csv")
+fig = experiment1.graph_income()#r"../output_files/Experiment1.csv")
 pio.write_html(fig, file='temp.html')
-fig.show()
+

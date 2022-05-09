@@ -276,6 +276,11 @@ class Results():
         if termination['Temination Condition'] == 'optimal':
             self.solution['temination'] = 'optimal'
             self.solution['OF_value'] = instance.obj_funct.expr()
+            self.solution['income'] = value(instance.Income)
+            self.solution['income_vma'] = value(instance.vma)*(1+value(instance.ft))*(1 - value(instance.tr))*(
+                sum(value(instance.x[i,j,k]) for i in instance.ZONES for k in instance.TRANSFORMERS for j in instance.COLLECTIONS)
+                ) 
+            self.solution['income_vd'] = value(instance.Income) - self.solution['income_vma']
             self.solution['cost_infraest'] = value(instance.InfrasCost)
             self.solution['cost_transport'] = value(instance.TranspCost)
             self.solution['cost_acquis'] = value(instance.AcquisCost)
@@ -291,10 +296,12 @@ class Results():
             self.solution['Q_transf'] = self.solution['Q_coll']*value(1-instance.tr)
             ratio = lambda x : self.solution['Q_transf']/x if (x > 0 ) else 1 
             self.solution['goal_ratio'] = ratio(self.instance_data['goalQ'])
-            # TODO: QRM, income_vd, income_vma 
         else:
             self.solution['temination'] = 'no-optimal'
             self.solution['OF_value'] = None
+            self.solution['income'] = None
+            self.solution['income_vma'] = None
+            self.solution['income_vd'] = None
             self.solution['cost_infraest'] = None
             self.solution['cost_transport'] = None
             self.solution['cost_acquis'] = None
