@@ -9,6 +9,7 @@ import itertools
 import pandas as pd
 import optimiser as opt 
 import plotly.express as px
+import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.offline import plot
 pio.renderers.default='browser'
@@ -25,8 +26,10 @@ class Experiment:
         self.df_results = pd.DataFrame()
         n_experiment = 0
         for comb in self.combinations:
+            print(comb)
             n_experiment += 1
             for idx in range(len(self.factors)):  
+                # identify whether the parameter is a single value or indexed  
                 len_attr = len(getattr(instance, self.factors[idx]))
                 if len_attr == 1:
                     query = "instance.{}={}".format(self.factors[idx], comb[idx])
@@ -49,20 +52,61 @@ class Experiment:
                 self.df_results = self.df_results. append(dict_results, ignore_index = True)
             else: 
                 self.df_results = self.df_results.append(dict_results, ignore_index = True)
+        
+        # Calculate extra columns
+        self.df_results['vd/vma'] = (self.df_results['vd']/self.df_results['vma']).astype(float).round(1)
+        self.df_results['%income_vd'] = (100*(self.df_results['income_vd']/self.df_results['income'])).astype(float)
+        self.df_results['%income_vma'] = (100*(self.df_results['income_vma']/self.df_results['income'])).astype(float)
+        a = 1
+        
+    def graph_goalAchiv(self, filepath=None):
+        if filepath != None:
+            try:
+                self.df_results = pd.read_csv(filepath)
+            except:
+                print("There is not a file with the given path")   
+        
+        df = self.df_results
+        df = df[df['vd']<=df['vma']]
+        df_grouped = df.groupby(['te', 'vd/vma'])['goal_ratio'].mean().reset_index()
+        df_grouped.sort_values(by=['vd/vma'])
+        pallete = px.colors.qualitative.Dark24
+        n_colors = len(pallete)
+        
+        fig = px.line(df_grouped, x='vd/vma', y='goal_ratio',  color='te',
+                      color_discrete_sequence = px.colors.qualitative.Dark24,
+                      title = "Goal accomplishment vs ratio between deposit and material value",
+                      labels = {
+                          'te': 'recovery rate',
+                          'vd/vma': 'deposit/material value',
+                          'goal_ratio': 'goal accomplishment',
+                          'MA':'recovery goal'})
+                        
+        return fig
 
-
-    def create_graph(self, filepath=None):
+    def graph_income(self, filepath=None):
         if filepath != None:
             try:
                 self.df_results = pd.read_csv(filepath)
             except:
                 print("There is not a file with the given path")
-        # df = self.df_results[self.df_results["vma"]==250000]        
         df = self.df_results
-        print(df.shape)
-        #df = df["vma_vd"] = df["vma"].apply(lambda x: x[1])
-        fig = px.box(df, x="vd", y="OF_value")
-        fig.show()
+        df = df[df['vd']<=df['vma']]
+        df_grouped = df.groupby(['te', 'MA', 'vd/vma'])[['income', '%income_vd', '%income_vma']].mean().reset_index()
+        df_grouped.sort_values(by=['vd/vma'])
+        pallete = px.colors.qualitative.Dark24
+        n_colors = len(pallete)        
+        df_filtered = df_grouped[df_grouped['te']==0.3]
+        fig = px.line(df_filtered, x='vd/vma', y=['%income_vd','%income_vma'] , animation_frame="MA",
+                      color_discrete_sequence = px.colors.qualitative.Dark24,
+                      title = "Goal accomplishment vs ratio between deposit and material value",
+                      labels = {
+                          'te': 'recovery rate',
+                          'vd/vma': 'deposit/material value [$/Ton]',
+                          'goal_ratio': '% of goal accomplishment',
+                          'MA':'recovery goal'})
+                        
+        return fig
     
     def create_graph1(self, filepath=None):
         if filepath != None:
@@ -72,8 +116,9 @@ class Experiment:
                 print("There is not a file with the given path")
             df = self.df_results[(self.df_results['vma']==250000) & (self.df_results['tr']==0.15)]
             print(df.shape)
-        fig = sns.barplot(data= df, x="vd", y="OF_value", hue ='te' )
-        fig.show()
+        fig = sns.barplot(data= df, x="vd", y="OF_value", hue ='te', )
+        
+        return fig
                 
             
            

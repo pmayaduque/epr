@@ -31,7 +31,19 @@ def read_data(data_path):
         else:
             data_read[key] = {None: value}    
     #compute QMR based in genQ and te
-    data_read['QMR'] = {i: data_read['genQ'][i]*data_read['te'][i] for i in data_read['ZONES'][None]}
+    #data_read['QMR'] = {i: data_read['genQ'][i]*data_read['te'][None] for i in data_read['ZONES'][None]}
+    # Create collection and transformation subsets
+    COLLECT_IN = [k for k, v in data_read['TA'].items() if v[0]==1]
+    COLLECT_OUT = [k for k, v in data_read['TA'].items() if v[0]==0]
+    data_read['COLLECT_IN'] = {None: COLLECT_IN} 
+    data_read['COLLECT_OUT'] = {None: COLLECT_OUT} 
+    TRANSF_IN = [k for k, v in data_read['TT'].items() if v[0]==1]
+    TRANSF_OUT = [k for k, v in data_read['TT'].items() if v[0]==0]
+    data_read['TRANSF_IN'] = {None: TRANSF_IN} 
+    data_read['TRANSF_OUT'] = {None: TRANSF_OUT} 
+    # Create capacity for outsource facilities
+    data_read['collect_out_cap'] = {k : v[1] for k, v in data_read['TA'].items() if v[0]==0}
+    data_read['transfer_out_cap'] = {k : v[1] for k, v in data_read['TT'].items() if v[0]==0}
     data_model = {None: data_read }
     #data_model[None] = data_read
     
