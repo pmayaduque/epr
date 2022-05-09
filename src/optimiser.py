@@ -78,7 +78,7 @@ def create_model():
     def system_income_rule(model):
         return (model.vma * (1 + model.ft) * 
                 sum((1 - model.tr) * model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS for j in model.COLLECTIONS) + 
-                model.vd * (
+                model.ind_income*model.vd * model.vma* ( # Activate if model_income = 1, the unclaimed deposits are kept
                     sum(model.genQ[i] for i in model.ZONES) -
                     sum(model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS for j in model.COLLECTIONS)
                     )) == model.Income
@@ -101,7 +101,7 @@ def create_model():
     
     # Acquisition cost 
     def acquisition_costs_rule(model):
-        return (model.vd*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS ))+
+        return (model.vd*model.vma*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS ))+
                 model.vma*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_IN))+
                 model.vma*(1+model.ft)*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_OUT ))
                 == model.AcquisCost)
@@ -294,7 +294,7 @@ class Results():
             self.solution['Rmin'] = min(instance.R.get_values().values())
             self.solution['Q_coll'] = sum(v for v in instance.x.get_values().values())
             self.solution['Q_transf'] = self.solution['Q_coll']*value(1-instance.tr)
-            ratio = lambda x : self.solution['Q_transf']/x if (x > 0 ) else 1 
+            ratio = lambda x : float(self.solution['Q_transf']/x) if (x > 0 ) else 1 
             self.solution['goal_ratio'] = ratio(self.instance_data['goalQ'])
         else:
             self.solution['temination'] = 'no-optimal'
