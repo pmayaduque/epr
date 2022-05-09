@@ -69,6 +69,7 @@ class Experiment:
         
         df_filtered = df_grouped[df_grouped['te']==0.3]
         fig = px.line(df_grouped, x='vd/vma', y='goal_ratio', animation_frame="MA", color='te',
+                      color_discrete_sequence = px.colors.qualitative.Dark24,
                       title = "Goal accomplishment vs ratio between deposit and material value",
                       labels = {
                           'te': 'recovery rate',
