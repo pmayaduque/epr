@@ -88,7 +88,7 @@ def create_model():
     def open_cost_rule(model):
         return (sum(model.r_cc[j]*sum(model.area[s]*model.y[j,s] for s in model.SIZES) for j in model.COLLECT_IN) + 
                 sum(model.r_tp[k]*sum(model.area[s]*model.z[k,s] for s in model.SIZES) for k in model.TRANSF_IN)
-                + model.ec) == model.InfrasCost
+                ) == model.InfrasCost
     model.cost_or = Constraint(rule=open_cost_rule)
     
     # Transport cost
@@ -132,7 +132,7 @@ def create_model():
     
     def max_recpl_rule(model):
         return sum(model.z[k, m] for m in model.SIZES for k in model.TRANSF_IN)  <= model.P
-    model.max_recpl = Constraint(rule=max_recpl_rule)    
+    #model.max_recpl = Constraint(rule=max_recpl_rule)    
     
     # Binary relation between opened facilities 
 
@@ -180,7 +180,7 @@ def create_model():
                 sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES for j in model.COLLECTIONS )
                 <= sum(model.CAP[s]*model.z[k,s] for s in model.SIZES)
                 )
-    model.trans_cap_rule1 = Constraint(model.TRANSF_IN, rule=trans_cap_rule1)
+    #model.trans_cap_rule1 = Constraint(model.TRANSF_IN, rule=trans_cap_rule1)
     
     def trans_cap_rule2(model, k):
         return (

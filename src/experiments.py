@@ -29,6 +29,7 @@ class Experiment:
             print(comb)
             n_experiment += 1
             for idx in range(len(self.factors)):  
+                # identify whether the parameter is a single value or indexed  
                 len_attr = len(getattr(instance, self.factors[idx]))
                 if len_attr == 1:
                     query = "instance.{}={}".format(self.factors[idx], comb[idx])
@@ -53,7 +54,7 @@ class Experiment:
                 self.df_results = self.df_results.append(dict_results, ignore_index = True)
         
         # Calculate extra columns
-        self.df_results['vd/vma'] = (100*self.df_results['vd']/self.df_results['vma']).astype(float).round(1)
+        self.df_results['vd/vma'] = (self.df_results['vd']/self.df_results['vma']).astype(float).round(1)
         self.df_results['%income_vd'] = (100*(self.df_results['income_vd']/self.df_results['income'])).astype(float)
         self.df_results['%income_vma'] = (100*(self.df_results['income_vma']/self.df_results['income'])).astype(float)
         a = 1
@@ -66,18 +67,19 @@ class Experiment:
                 print("There is not a file with the given path")   
         
         df = self.df_results
-        df_grouped = df.groupby(['te', 'MA', 'vd/vma'])['goal_ratio'].mean().reset_index()
+        df = df[df['vd']<=df['vma']]
+        df_grouped = df.groupby(['te', 'vd/vma'])['goal_ratio'].mean().reset_index()
         df_grouped.sort_values(by=['vd/vma'])
         pallete = px.colors.qualitative.Dark24
         n_colors = len(pallete)
         
-        fig = px.line(df_grouped, x='vd/vma', y='goal_ratio', animation_frame="MA", color='te',
+        fig = px.line(df_grouped, x='vd/vma', y='goal_ratio',  color='te',
                       color_discrete_sequence = px.colors.qualitative.Dark24,
                       title = "Goal accomplishment vs ratio between deposit and material value",
                       labels = {
                           'te': 'recovery rate',
-                          'vd/vma': 'deposit/material value [$/Ton]',
-                          'goal_ratio': '% of goal accomplishment',
+                          'vd/vma': 'deposit/material value',
+                          'goal_ratio': 'goal accomplishment',
                           'MA':'recovery goal'})
                         
         return fig
@@ -89,13 +91,12 @@ class Experiment:
             except:
                 print("There is not a file with the given path")
         df = self.df_results
+        df = df[df['vd']<=df['vma']]
         df_grouped = df.groupby(['te', 'MA', 'vd/vma'])[['income', '%income_vd', '%income_vma']].mean().reset_index()
         df_grouped.sort_values(by=['vd/vma'])
         pallete = px.colors.qualitative.Dark24
-        n_colors = len(pallete)
-        
+        n_colors = len(pallete)        
         df_filtered = df_grouped[df_grouped['te']==0.3]
-        print(df_filtered)
         fig = px.line(df_filtered, x='vd/vma', y=['%income_vd','%income_vma'] , animation_frame="MA",
                       color_discrete_sequence = px.colors.qualitative.Dark24,
                       title = "Goal accomplishment vs ratio between deposit and material value",
