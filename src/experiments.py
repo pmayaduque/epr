@@ -137,7 +137,7 @@ def EDA_graph(instance,
         experiment1 = Experiment(instance, exp_design)
         df1 = experiment1.df_results            
             
-    # Create graph    
+    # Create vars for the graph   
     dict_varX = {'vma': "Material value", 
                  'vd': "Deposit Value", 
                  'MA': "Recovery goal", 
@@ -148,14 +148,16 @@ def EDA_graph(instance,
                  'goal_ratio': "Goal Achivement"}
     plot_varY = list(dict_varY.keys())
 
+    # Creates subplots container
     fig = make_subplots(rows=len(plot_varY), cols=len(plot_varX))
-
+    
+    # Creates each subplot
     for i in range(len(plot_varY)):
         for j in range(len(plot_varX)):
             subfig = go.Box(x=df1[plot_varX[j]], y=df1[plot_varY[i]],
                                 name=plot_varX[j])
             fig.append_trace(subfig, i+1, j+1)
-            
+    # Remove legends         
     fig.update(layout_showlegend=False)
 
     # set axis labels
@@ -164,6 +166,7 @@ def EDA_graph(instance,
             fig.update_xaxes(title_text=dict_varX[plot_varX[j]], row = i+1, col = j+1)
             if j == 0:
                 fig.update_yaxes(title_text=dict_varY[plot_varY[i]], row = i+1, col = 1)
+    
     return fig 
         
            

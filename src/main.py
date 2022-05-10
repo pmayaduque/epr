@@ -55,39 +55,54 @@ exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
              'ft' : [0.15, 0.30, 0.45]
         }
 experiment1 = Experiment(instance, exp_design)
-fig = experiment1.graph_goalAchiv()#r"../output_files/Experiment1.csv")
-pio.write_html(fig, file='temp.html')
 
-df1 = experiment1.df_results
-dict_varX = {'vma': "Material value", 
-             'vd': "Deposit Value", 
-             'MA': "Recovery goal", 
-             'te': "recovery rate"}
-plot_varX = list(dict_varX.keys())
 
-dict_varY = {'OF_value': 'System profit', 
-             'goal_ratio': "Goal Achivement"}
-plot_varY = list(dict_varY.keys())
-
-fig = make_subplots(rows=len(plot_varY), cols=len(plot_varX),                    
-                    row_titles = plot_varY)
-
-for i in range(len(plot_varY)):
-    for j in range(len(plot_varX)):
-        subfig = go.Box(x=df1[plot_varX[j]], y=df1[plot_varY[i]],
-                            name=plot_varX[j])
-        fig.append_trace(subfig, i+1, j+1)
-        
-fig.update(layout_showlegend=False)
-
-# set axis labels
-for i in range(len(plot_varY)):
-    for j in range(len(plot_varX)):        
-        fig.update_xaxes(title_text=dict_varX[plot_varX[j]], row = i+1, col = j+1)
-        if j == 0:
-            fig.update_yaxes(title_text=dict_varY[plot_varY[i]], row = i+1, col = 1)
-
+# Exploratory Analysis
 fig = EDA_graph(instance, r"../output_files/EDA.csv")
+pio.write_html(fig2, file='temp.html')
+
+# General overview vd vs vma
+df1 = pd.read_csv(r"../output_files/EDA.csv")
+#df1 = df1[(df1["MA"]==0.15) & (df1["MA"]==0.3)]
+df_grouped = df1.groupby(['vd'])[['income', '%income_vd', '%income_vma']].mean().reset_index()
+df_grouped.sort_values(by=['vd'])     
+fig1 = px.line(df_grouped, x='vd', y=['%income_vd','%income_vma'],
+              color_discrete_sequence = px.colors.qualitative.Dark24,
+              title = "Goal accomplishment vs ratio between deposit and material value",
+              labels = {
+                  'te': 'recovery rate',
+                  'vd': 'deposit/material value as fraction of vma',
+                  'goal_ratio': '% of goal accomplishment',
+                  'MA':'recovery goal'})
+
+
+df_grouped = df1.groupby(['vma', 'vd'])['goal_ratio'].mean().reset_index()
+df_grouped.sort_values(by=['vd'])        
+fig2 = px.line(df_grouped, x='vd', y='goal_ratio',  color='vma',
+                      color_discrete_sequence = px.colors.qualitative.Dark24,
+                      title = "Goal accomplishment vs ratio between deposit and material value",
+                      labels = {
+                          'te': 'recovery rate',
+                          'vd': 'deposit value as fraction of material value in the market',
+                          'goal_ratio': 'goal accomplishment',
+                          'MA':'recovery goal'})
+          
+fig = make_subplots(rows=2, cols=1, shared_xaxes='columns')
+
+n1_traces = len(fig1['data'])
+n2_traces = len(fig2['data'])
+for i in range(n1_traces):
+    trace = fig1['data'][i]
+    fig.append_trace(trace, 1, 1)
+for i in range(n2_traces):
+    trace = fig2['data'][i]
+    fig.append_trace(trace, 2, 1)
+
+fig.update_traces(legendgroup = '1',row=1)
+fig.update_traces(legendgroup = '2',row=2)
+
+fig.update_layout(
+    legend_tracegroupgap = 180
+)
+
 pio.write_html(fig, file='temp.html')
-
-
