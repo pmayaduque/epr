@@ -42,27 +42,15 @@ print(model_results.solution)
 '''
 
 
-exp_design= {'vma' :[i for i in range(1500000, 4000000, 50000)],
-             'vd' : [i/100 for i in range(0, 100, 1)],
+
+
+
+exp_design= {'vma' :[i for i in range(250000, 1000000, 50000)],
+             'vd' : [i/100 for i in range(0, 100, 2)],
              'MA' : [0.1],
-             'te' : [0.3]
+             'te' : [0.15, 0.2, 0.3]
         }
-# Run the experiment
 experiment1 = Experiment(instance, exp_design)
-df1 = experiment1.df_results
-fig = px.line(df1, x='vd', y='goal_ratio',  color='vma',
-                    color_discrete_sequence = px.colors.qualitative.Dark24,
-                    title = "Goal accomplishment vs ratio between deposit and material value",
-                    labels = {
-                        'te': 'recovery rate',
-                        'vd': 'deposit/material value as fraction of vma',
-                        'goal_ratio': 'goal accomplishment',
-                        'MA':'recovery goal'})
-pio.write_html(fig, file='temp.html')
-
-
-
-# Create graphs
 fig = experiment1.graph_goalAchiv()#r"../output_files/Experiment1.csv")
 pio.write_html(fig, file='temp.html')
 
