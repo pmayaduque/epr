@@ -11,6 +11,7 @@ import optimiser as opt
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+from plotly.subplots import make_subplots
 from plotly.offline import plot
 pio.renderers.default='browser'
 
@@ -114,6 +115,55 @@ class Experiment:
         fig = sns.barplot(data= df, x="vd", y="OF_value", hue ='te', )
         
         return fig
-                
+
+
+# Describes a set of predifined experiments                
+def EDA_graph(instance, 
+              results_path = None):
+    
+    if results_path != None:
+        try:
+            df1 = pd.read_csv(results_path)
+        except:
+            print("There is not a file with the given path")
+    else:
+        exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
+                     'vd' : [i/100 for i in range(0, 101, 10)],
+                     'MA' : [0.10, 0.15, 0.20],
+                     'te' : [0.15, 0.20, 0.30],
+                     'alfa' : [0.20, 0.30, 0.50],
+                     'ft' : [0.15, 0.30, 0.45]
+                }
+        experiment1 = Experiment(instance, exp_design)
+        df1 = experiment1.df_results            
             
+    # Create graph    
+    dict_varX = {'vma': "Material value", 
+                 'vd': "Deposit Value", 
+                 'MA': "Recovery goal", 
+                 'te': "recovery rate"}
+    plot_varX = list(dict_varX.keys())
+
+    dict_varY = {'OF_value': 'System profit', 
+                 'goal_ratio': "Goal Achivement"}
+    plot_varY = list(dict_varY.keys())
+
+    fig = make_subplots(rows=len(plot_varY), cols=len(plot_varX))
+
+    for i in range(len(plot_varY)):
+        for j in range(len(plot_varX)):
+            subfig = go.Box(x=df1[plot_varX[j]], y=df1[plot_varY[i]],
+                                name=plot_varX[j])
+            fig.append_trace(subfig, i+1, j+1)
+            
+    fig.update(layout_showlegend=False)
+
+    # set axis labels
+    for i in range(len(plot_varY)):
+        for j in range(len(plot_varX)):        
+            fig.update_xaxes(title_text=dict_varX[plot_varX[j]], row = i+1, col = j+1)
+            if j == 0:
+                fig.update_yaxes(title_text=dict_varY[plot_varY[i]], row = i+1, col = 1)
+    return fig 
+        
            

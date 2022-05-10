@@ -35,29 +35,16 @@ pio.write_html(fig, file='temp.html')
 -----------------------------------------------------------------------------
 # EXPERIMENTS
 -----------------------------------------------------------------------------
-# Large set of runs to show importance of vd/vma ratio 
-exp_design= {'te' : [0.15, 0.2, 0.3],#, [0.15, 0.20, 0.25, 0.3], #[0.30, 0.50],
-             'vma' :[i for i in range(250000, 750001, 50000)],
-             'vd' : [i/100 for i in range(0, 100, 1)],
-             'MA' : [i/100 for i in range(10, 21, 2)]
+### Run for pairplot 
+exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
+             'vd' : [i/100 for i in range(0, 101, 10)],
+             'MA' : [0.10, 0.15, 0.20],
+             'te' : [0.15, 0.20, 0.30],
+             'alfa' : [0.20, 0.30, 0.50],
+             'ft' : [0.15, 0.30, 0.45]
         }
-
-Minimum value of vma      
-exp_design= {'vma' :[i for i in range(200000, 400000, 1000)],
-             'vd' : [0],
-             'MA' : [0.1]
-        }
-# Run the experiment
 experiment1 = Experiment(instance, exp_design)
-df1 = experiment1.df_results
-fig = px.line(df1, x='vma', y='OF_value',  color='vd',
-                    color_discrete_sequence = px.colors.qualitative.Dark24,
-                    title = "Goal accomplishment vs ratio between deposit and material value",
-                    labels = {
-                        'te': 'recovery rate',
-                        'vd': 'deposit/material value as fraction of vma',
-                        'goal_ratio': 'goal accomplishment',
-                        'MA':'recovery goal'})
+fig = experiment1.graph_goalAchiv()#r"../output_files/Experiment1.csv")
 pio.write_html(fig, file='temp.html')
 
 

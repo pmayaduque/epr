@@ -10,6 +10,8 @@ from  pyomo.environ import *
 from utilities import read_data
 from experiments import Experiment
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import plotly.io as pio
 
 #from model_deposit_no_income import create_model  ## Modelo cuando el dopósito no es un ingreso
@@ -43,18 +45,49 @@ print(model_results.solution)
 
 
 
+# Exploratory analysis
 
-
-exp_design= {'vma' :[i for i in range(250000, 1000000, 50000)],
-             'vd' : [i/100 for i in range(0, 100, 2)],
-             'MA' : [0.1],
-             'te' : [0.15, 0.2, 0.3]
+exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
+             'vd' : [i/100 for i in range(0, 101, 10)],
+             'MA' : [0.10, 0.15, 0.20],
+             'te' : [0.15, 0.20, 0.30],
+             'alfa' : [0.20, 0.30, 0.50],
+             'ft' : [0.15, 0.30, 0.45]
         }
 experiment1 = Experiment(instance, exp_design)
 fig = experiment1.graph_goalAchiv()#r"../output_files/Experiment1.csv")
 pio.write_html(fig, file='temp.html')
 
+df1 = experiment1.df_results
+dict_varX = {'vma': "Material value", 
+             'vd': "Deposit Value", 
+             'MA': "Recovery goal", 
+             'te': "recovery rate"}
+plot_varX = list(dict_varX.keys())
 
+dict_varY = {'OF_value': 'System profit', 
+             'goal_ratio': "Goal Achivement"}
+plot_varY = list(dict_varY.keys())
 
+fig = make_subplots(rows=len(plot_varY), cols=len(plot_varX),                    
+                    row_titles = plot_varY)
+
+for i in range(len(plot_varY)):
+    for j in range(len(plot_varX)):
+        subfig = go.Box(x=df1[plot_varX[j]], y=df1[plot_varY[i]],
+                            name=plot_varX[j])
+        fig.append_trace(subfig, i+1, j+1)
+        
+fig.update(layout_showlegend=False)
+
+# set axis labels
+for i in range(len(plot_varY)):
+    for j in range(len(plot_varX)):        
+        fig.update_xaxes(title_text=dict_varX[plot_varX[j]], row = i+1, col = j+1)
+        if j == 0:
+            fig.update_yaxes(title_text=dict_varY[plot_varY[i]], row = i+1, col = 1)
+
+fig = EDA_graph(instance, r"../output_files/EDA.csv")
+pio.write_html(fig, file='temp.html')
 
 
