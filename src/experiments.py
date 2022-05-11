@@ -50,7 +50,7 @@ class Experiment:
             dict_results = {**model_results.instance_data, **model_results.solution}
             if len(self.df_results) == 0:   
                 self.df_results = pd.DataFrame(columns = list(dict_results.keys()))
-                self.df_results = self.df_results. append(dict_results, ignore_index = True)
+                self.df_results = self.df_results.append(dict_results, ignore_index = True)
             else: 
                 self.df_results = self.df_results.append(dict_results, ignore_index = True)
         
@@ -168,7 +168,88 @@ def EDA_graph(instance,
                 fig.update_yaxes(title_text=dict_varY[plot_varY[i]], row = i+1, col = 1)
     
     return fig 
+
+
+def overview_dv_mva(instance, results_path = None):
+    if results_path != None:
+       try:
+           df1 = pd.read_csv(results_path)
+       except:
+           print("There is not a file with the given path")
+    else:
+       exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
+                    'vd' : [i/100 for i in range(0, 101, 10)],
+                    'MA' : [0.10, 0.15, 0.20],
+                    'te' : [0.15, 0.20, 0.30],
+                    'alfa' : [0.20, 0.30, 0.50],
+                    'ft' : [0.15, 0.30, 0.45]
+               }
+       experiment1 = Experiment(instance, exp_design)
+       df1 = experiment1.df_results  
         
+    df1['goal_ratio'] = 100*df1['goal_ratio']
+    df_grouped = df1.groupby(['vma', 'vd'])['goal_ratio'].mean().reset_index()
+    df_grouped.sort_values(by=['vd'])        
+    fig1 = px.line(df_grouped, x='vd', y='goal_ratio',  color='vma',
+                          color_discrete_sequence = px.colors.qualitative.Dark24)
+    df_grouped = df1.groupby(['te', 'vd'])['goal_ratio'].mean().reset_index()
+    fig2 = px.line(df_grouped, x='vd', y='goal_ratio',  color='te',
+                          color_discrete_sequence = px.colors.qualitative.Dark24)
+    
+              
+    fig = make_subplots(rows=2, cols=1,
+                        y_title = "% of goal achivement",
+                        shared_xaxes='columns',
+                        vertical_spacing=0.05)
+    
+    n1_traces = len(fig1['data'])
+    n2_traces = len(fig2['data'])
+    #vma = df_grouped['vma'].unique()
+    #income_txt = ["Deposit", "Material"]
+    for i in range(n1_traces):        
+        trace = fig1['data'][i]    
+        #trace.name = "vma:"+ str(vma[i])
+        trace.legendgroup = "1"
+        fig.append_trace(trace, 1, 1)
+    for i in range(n2_traces):
+        trace = fig2['data'][i]
+        #trace.name =  income_txt[i]
+        trace.legendgroup = "2"
+        fig.append_trace(trace, 2, 1)
+    
+    fig.update_traces(legendgroup = '1',row=1)
+    fig.update_traces(legendgroup = '2',row=2)
+    fig.update_layout(
+        legend_tracegroupgap = 180
+    )
+    fig.update_xaxes(dtick=0.1, tickformat=".1f")
+    fig.update_xaxes(title_text="Deposit as a fration of material value", row = 2, col = 1)
+    fig.update_yaxes(dtick=5, tickformat=".0f")
+    
+    annotations = {
+        'annotation1' : {
+            'xref': 'paper',  # we'll reference the paper which we draw plot
+            'yref': 'paper',  # we'll reference the paper which we draw plot
+            'x': 1.1,  # If we consider the x-axis as 100%, we will place it on the x-axis with how many %
+            'y': 1.05,  # If we consider the y-axis as 100%, we will place it on the y-axis with how many %
+            'text': 'Material Value',
+            'showarrow': False,
+            'font': {'size': 14, 'color': 'black'}
+        },    
+        'annotation2' : {
+            'xref': 'paper',  # we'll reference the paper which we draw plot
+            'yref': 'paper',  # we'll reference the paper which we draw plot
+            'x': 1.1,  # If we consider the x-axis as 100%, we will place it on the x-axis with how many %
+            'y': 0.51,  # If we consider the y-axis as 100%, we will place it on the y-axis with how many %
+            'text': 'Recovery rate',
+            'showarrow': False,
+            'font': {'size': 14, 'color': 'black'}
+        }
+    }
+    for v in annotations.values():    
+        fig.add_annotation(v)
+    
+    return fig
 
 # General overview vd vs vma
 df1 = pd.read_csv(r"../output_files/EDA.csv")

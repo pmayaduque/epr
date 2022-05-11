@@ -51,6 +51,7 @@ def create_model():
     model.ft = Param(within=PositiveReals, mutable = True)                         # Factor de transformacion 
     model.fop= Param(within=PositiveReals, mutable = True)  # percentage of the valorization ft that is expend in transformation  
     model.ind_income = Param(within=Binary, initialize = 1, mutable = True)
+    model.epsilon = Param(within=PositiveReals, initialize = 0, mutable = True)
     
     # Definir variables
     model.y = Var(model.COLLECT_IN, model.SIZES, domain=Binary)                      # Variable de apertura y tamaño de COLLECTIONS
@@ -103,7 +104,7 @@ def create_model():
     def acquisition_costs_rule(model):
         return (model.vd*model.vma*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS ))+
                 model.vma*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_IN))+
-                model.vma*(1+model.ft)*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_OUT ))
+                (model.vma*(1+ model.epsilon))*(1+model.ft)*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_OUT ))
                 == model.AcquisCost)
     model.ct_AcquisCost = Constraint(rule=acquisition_costs_rule)
     
@@ -265,6 +266,7 @@ class Results():
         self.instance_data['O'] = value(instance.O)
         self.instance_data['P'] = value(instance.P)
         self.instance_data['alfa'] = value(instance.alfa)
+        self.instance_data['epsilon'] = value(instance.epsilon)
         self.instance_data['ft'] = value(instance.ft)
         self.instance_data['ec'] = value(instance.ec)
         self.instance_data['r_cc'] = [(k, value(v)) for k, v in instance.r_cc.items()]

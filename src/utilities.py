@@ -8,6 +8,8 @@ Created on Mon May  2 16:20:56 2022
 import requests
 import json 
 import ast
+import binsreg
+import pandas as pd
 
 def read_data(data_path):
     
@@ -48,3 +50,24 @@ def read_data(data_path):
     #data_model[None] = data_read
     
     return data_model
+
+def binscatter(**kwargs):
+    # Estimate binsreg
+    est = binsreg.binsreg(**kwargs)
+    
+    # Retrieve estimates
+    df_est = pd.concat([d.dots for d in est.data_plot])
+    df_est = df_est.rename(columns={'x': kwargs.get("x"), 'fit': kwargs.get("y")})
+    
+    # Add confidence intervals
+    if "ci" in kwargs:
+        df_est = pd.merge(df_est, pd.concat([d.ci for d in est.data_plot]))
+        df_est = df_est.drop(columns=['x'])
+        df_est['ci'] = df_est['ci_r'] - df_est['ci_l']
+    
+    # Rename groups
+    if "by" in kwargs:
+        df_est['group'] = df_est['group'].astype(df[kwargs.get("by")].dtype)
+        df_est = df_est.rename(columns={'group': kwargs.get("by")})
+
+    return df_est
