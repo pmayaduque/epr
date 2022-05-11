@@ -67,3 +67,63 @@ fig = experiment1.graph_goalAchiv()
 pio.write_html(fig, file='temp.html')
 
 
+df1 = pd.read_csv(r"../output_files/EDA_large.csv")
+df_grouped = df1.groupby(['vma', 'vd'])['goal_ratio'].mean().reset_index()
+df_grouped.sort_values(by=['vd'])        
+fig1 = px.line(df_grouped, x='vd', y='goal_ratio',  color='vma',
+                      color_discrete_sequence = px.colors.qualitative.Dark24,
+                      title = "Goal accomplishment vs ratio between deposit and material value",
+                      labels = {
+                          'te': 'recovery rate',
+                          'vd': 'deposit value as fraction of material value in the market',
+                          'goal_ratio': 'goal accomplishment',
+                          'MA':'recovery goal'})
+df_grouped = df1.groupby(['te', 'vd'])['goal_ratio'].mean().reset_index()
+fig2 = px.line(df_grouped, x='vd', y='goal_ratio',  color='te',
+                      color_discrete_sequence = px.colors.qualitative.Dark24,
+                      title = "Goal accomplishment vs ratio between deposit and material value",
+                      labels = {
+                          'te': 'recovery rate',
+                          'vd': 'deposit value as fraction of material value in the market',
+                          'goal_ratio': 'goal accomplishment',
+                          'MA':'recovery goal'})
+
+          
+fig = make_subplots(rows=2, cols=1, 
+                    shared_xaxes='columns',
+                    vertical_spacing=0.05)
+
+n1_traces = len(fig1['data'])
+n2_traces = len(fig2['data'])
+#vma = df_grouped['vma'].unique()
+#income_txt = ["Deposit", "Material"]
+for i in range(n1_traces):        
+    trace = fig1['data'][i]    
+    #trace.name = "vma:"+ str(vma[i])
+    trace.legendgroup = "1"
+    fig.append_trace(trace, 1, 1)
+for i in range(n2_traces):
+    trace = fig2['data'][i]
+    #trace.name =  income_txt[i]
+    trace.legendgroup = "2"
+    fig.append_trace(trace, 2, 1)
+
+fig.update_traces(legendgroup = '1',row=1)
+fig.update_traces(legendgroup = '2',row=2)
+
+
+
+fig.update_layout(
+    legend_tracegroupgap = 180
+)
+fig.update_xaxes(dtick=0.1, tickformat=".1f")
+fig.update_xaxes(title_text="Deposit as a fration of material value", row = 2, col = 1)
+fig.update_yaxes(dtick=0.05, tickformat=".2f")
+fig.update_annotations(dict(font_size=8))
+for col in [1]:
+    fig.add_annotation(dict(x=col / 2 - 0.4, y=0.8, xref="paper", yref="paper", 
+                            text='trace %d' %col, showarrow=False))
+
+
+pio.write_html(fig, file='temp.html')          
+
