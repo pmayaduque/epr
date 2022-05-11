@@ -51,7 +51,7 @@ def create_model():
     model.ft = Param(within=PositiveReals, mutable = True)                         # Factor de transformacion 
     model.fop= Param(within=PositiveReals, mutable = True)  # percentage of the valorization ft that is expend in transformation  
     model.ind_income = Param(within=Binary, initialize = 1, mutable = True)
-    model.epsilon = Param(within=PositiveReals, initialize = 0, mutable = True)
+    model.epsilon = Param(within=NonNegativeReals, initialize = 0.1, mutable = True)
     
     # Definir variables
     model.y = Var(model.COLLECT_IN, model.SIZES, domain=Binary)                      # Variable de apertura y tamaño de COLLECTIONS

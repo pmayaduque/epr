@@ -61,8 +61,8 @@ pio.write_html(fig, file='temp.html')
 
 
 exp_design= {'ind_income': [0, 1],
-            'vma' :[200000],
-             'vd' : [20],
+            'vma' :[500000],
+             'vd' : [0],
              'MA' : [0.10],
              'te' : [0.15],
              'alfa' : [1],
