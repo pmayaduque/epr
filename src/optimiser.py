@@ -102,7 +102,8 @@ def create_model():
     
     # Acquisition cost 
     def acquisition_costs_rule(model):
-        return (model.vd*model.vma*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS ))+
+        return (model.vd*model.vma*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSF_IN ))+
+                (model.vd*model.vma + model.vma*model.ft*model.fop)*(sum(model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSF_OUT ))+
                 model.vma*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_IN))+
                 (model.vma*(1+ model.epsilon))*(1+model.ft)*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_OUT ))
                 == model.AcquisCost)

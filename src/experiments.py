@@ -136,7 +136,12 @@ def EDA_graph(instance,
                 }
         experiment1 = Experiment(instance, exp_design)
         df1 = experiment1.df_results            
-            
+    
+    # Define colors 
+    pallete = px.colors.qualitative.Dark24
+    n_colors = len(pallete)
+    trace = 0
+    
     # Create vars for the graph   
     dict_varX = {'vma': "Material value", 
                  'vd': "Deposit Value", 
@@ -153,10 +158,14 @@ def EDA_graph(instance,
     
     # Creates each subplot
     for i in range(len(plot_varY)):
+        trace = 0
         for j in range(len(plot_varX)):
             subfig = go.Box(x=df1[plot_varX[j]], y=df1[plot_varY[i]],
-                                name=plot_varX[j])
+                                name=plot_varX[j],
+                                marker_color=pallete[trace])
             fig.append_trace(subfig, i+1, j+1)
+            trace += 1
+            trace = trace%n_colors
     # Remove legends         
     fig.update(layout_showlegend=False)
 
@@ -210,17 +219,19 @@ def overview_dv_mva(instance, results_path = None):
         trace = fig1['data'][i]    
         #trace.name = "vma:"+ str(vma[i])
         trace.legendgroup = "1"
+        trace.legendgrouptitle=dict(text="Material value")
         fig.append_trace(trace, 1, 1)
     for i in range(n2_traces):
         trace = fig2['data'][i]
         #trace.name =  income_txt[i]
         trace.legendgroup = "2"
+        trace.legendgrouptitle=dict(text="Recovery rate")
         fig.append_trace(trace, 2, 1)
     
     fig.update_traces(legendgroup = '1',row=1)
     fig.update_traces(legendgroup = '2',row=2)
     fig.update_layout(
-        legend_tracegroupgap = 180
+        legend_tracegroupgap = 150
     )
     fig.update_xaxes(dtick=0.1, tickformat=".1f")
     fig.update_xaxes(title_text="Deposit as a fration of material value", row = 2, col = 1)
@@ -246,8 +257,69 @@ def overview_dv_mva(instance, results_path = None):
             'font': {'size': 14, 'color': 'black'}
         }
     }
-    for v in annotations.values():    
-        fig.add_annotation(v)
+    #for v in annotations.values():    
+        #fig.add_annotation(v)
+    
+    return fig
+
+def graph_case_dv_vma(instance, results_path = None):
+    if results_path != None:
+       try:
+           df1 = pd.read_csv(results_path)
+       except:
+           print("There is not a file with the given path")
+    else:
+        exp_design= {'ind_income': [0, 1],
+            'vma' :[200000, 30000, 450000, 500000],
+             'vd' : [i/100 for i in range(0, 101, 1)]
+              }
+        experiment1 = Experiment(instance, exp_design)
+        df1 = experiment1.df_results 
+    df1["scaled_profit"] = (df1["OF_value"] - df1["OF_value"].min()) /(df1["OF_value"].max() -df1["OF_value"].min())
+    
+    pallete = px.colors.qualitative.Dark24
+    n_colors = len(pallete)
+    trace = 0
+    fig = make_subplots(rows=2, cols=1,                        
+                        shared_xaxes='columns',
+                        vertical_spacing=0.05)
+    
+    for vma in list(df1['vma'].unique()):  
+        df_filtered0 = df1[(df1['vma']==vma) & (df1['ind_income']==0)]
+        fig.add_trace(go.Scatter(x=df_filtered0['vd'], y=df_filtered0['goal_ratio'],
+                        mode='lines',
+                        line = dict(dash='dash',color=pallete[trace]),
+                        name=str(vma),
+                        legendgroup = 1,#""d"+str(trace),                    
+                        legendgrouptitle_text="Material value"
+                        ), 1, 1)
+        fig.add_trace(go.Scatter(x=df_filtered0['vd'], y=df_filtered0['scaled_profit'],
+                        mode='lines',
+                        line = dict(dash='dash', color=pallete[trace]),
+                        name=' ',
+                        legendgroup = 1,#"d"+str(trace),
+                        showlegend=False), 2, 1)
+        df_filtered1 = df1[(df1['vma']==vma) & (df1['ind_income']==1)]
+        fig.add_trace(go.Scatter(x=df_filtered1['vd'], y=df_filtered1['goal_ratio'],
+                        mode='lines',
+                        line = dict(color=pallete[trace]),
+                        name= '',
+                        legendgroup = 1#"l"+str(trace)
+                        ), 1, 1)
+        fig.add_trace(go.Scatter(x=df_filtered1['vd'], y=df_filtered1['scaled_profit'],
+                        mode='lines',
+                        line = dict(color=pallete[trace]),
+                        name= ' ',
+                        legendgroup = 1,#,"l"+str(trace),
+                        showlegend=False), 2, 1)       
+        trace += 1
+        trace = trace%n_colors
+
+    fig.update_yaxes(title_text="Goal achiviement", row = 1, col = 1)
+    fig.update_yaxes(title_text="Scaled profit", row = 2, col = 1)
+    fig.update_xaxes(dtick=0.1, tickformat=".1f")
+    fig.update_yaxes(dtick=0.1, tickformat=".1f")
+    fig.update_layout(legend=dict(groupclick="toggleitem"))
     
     return fig
 
