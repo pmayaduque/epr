@@ -8,7 +8,8 @@ Created on Mon May  2 16:08:29 2022
 import optimiser as opt ##Modelo normal
 from  pyomo.environ import *
 from utilities import read_data
-from experiments import Experiment, EDA_graph, overview_dv_mva, graph_case_dv_vma
+#from experiments import Experiment, EDA_graph, overview_dv_mva, graph_case_dv_vma
+import experiments
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -44,30 +45,32 @@ print(model_results.solution)
 
 
 
-'''
+
 
 
 # Exploratory Analysis
-fig = EDA_graph(instance, r"../output_files/EDA.csv")
+fig = experiments.EDA_graph(instance, r"../output_files/EDA.csv")
 pio.write_html(fig, file='temp.html')
 
 # General overview
-fig = overview_dv_mva(instance, r"../output_files/EDA.csv")
+fig = experiments.overview_dv_mva(instance, r"../output_files/EDA_large.csv")
 pio.write_html(fig, file='temp.html')  
 
 # A particular case vd vs vma
-fig = graph_case_dv_vma(instance, r"../output_files/vma_vd.csv")
+fig = experiments.graph_case_dv_vma(instance, r"../output_files/vma_vd.csv")
 pio.write_html(fig, file='temp.html')  
 
-exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
-                    'vd' : [i/100 for i in range(0, 101, 1)],
-                    'MA' : [0.10, 0.15, 0.20],
-                    'te' : [0.15, 0.20, 0.30],
-                    'alfa' : [0.20, 0.30, 0.50],
-                    'ft' : [0.15, 0.30, 0.45]
-               }
-experiment1 = Experiment(instance, exp_design)
+'''
+# Experiments capacity
+exp_design= {'vma' :[500000],
+             'vd' : [0.4],
+             'MA' : [0.15],
+             'te' : [0.20],
+             'alfa' : [0.1]
+                }
+experiment1 = experiments.Experiment(instance, exp_design)
 df1 = experiment1.df_results 
-df1.to_csv("EDA_large.csv", index=False)
+df1.to_csv("alfa_ft.csv", index=False)
+
 
  

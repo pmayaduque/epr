@@ -204,7 +204,7 @@ def create_model():
     def rec_by_zone_rule1(model, i):
         return (
             #sum((model.x[i,j,k]/model.QMR[i]) for j in model.COLLECTIONS for k in model.TRANSFORMERS)
-            sum((model.x[i,j,k]/model.genQ[i]*model.te) for j in model.COLLECTIONS for k in model.TRANSFORMERS)
+            sum((model.x[i,j,k]/(model.genQ[i]*model.te)) for j in model.COLLECTIONS for k in model.TRANSFORMERS)
                 == model.R[i]
                 )
     model.rec_by_zone1 = Constraint(model.ZONES, rule = rec_by_zone_rule1)
@@ -292,7 +292,7 @@ class Results():
             self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
             self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
             #self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
-            self.solution['R'] = instance.R.get_values() 
+            self.solution['R'] = instance.R.get_values()
             self.solution['Rmax'] = max(instance.R.get_values().values()) 
             self.solution['Rmin'] = min(instance.R.get_values().values())
             self.solution['Q_coll'] = sum(v for v in instance.x.get_values().values())

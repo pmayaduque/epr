@@ -43,7 +43,8 @@ class Experiment:
             results, termination = opt.solve_instance(instance, 
                                        optimizer = 'gurobi',
                                        mipgap = 0.002,
-                                       tee = False)           
+                                       tee = False)  
+            
             model_results = opt.Results(instance, termination) 
             
             # get results in dataframe
