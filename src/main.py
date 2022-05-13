@@ -59,7 +59,15 @@ pio.write_html(fig, file='temp.html')
 fig = graph_case_dv_vma(instance, r"../output_files/vma_vd.csv")
 pio.write_html(fig, file='temp.html')  
 
-
-
+exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
+                    'vd' : [i/100 for i in range(0, 101, 1)],
+                    'MA' : [0.10, 0.15, 0.20],
+                    'te' : [0.15, 0.20, 0.30],
+                    'alfa' : [0.20, 0.30, 0.50],
+                    'ft' : [0.15, 0.30, 0.45]
+               }
+experiment1 = Experiment(instance, exp_design)
+df1 = experiment1.df_results 
+df1.to_csv("EDA_large.csv", index=False)
 
  
