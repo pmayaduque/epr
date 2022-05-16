@@ -50,7 +50,7 @@ def create_model():
     model.alfa = Param(within=NonNegativeReals, mutable = True)                    # Porcentaje para balance
     model.ft = Param(within=PositiveReals, mutable = True)                         # Factor de transformacion 
     model.fop= Param(within=PositiveReals, mutable = True)  # percentage of the valorization ft that is expend in transformation  
-    model.ind_income = Param(within=Binary, initialize = 1, mutable = True)
+    model.ind_income = Param(within=NonNegativeReals, initialize = 1, mutable = True)
     model.epsilon = Param(within=NonNegativeReals, initialize = 0.1, mutable = True)
     
     # Definir variables

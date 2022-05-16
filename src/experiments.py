@@ -130,14 +130,14 @@ def EDA_graph(instance,
     else:
         exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
                      'vd' : [i/100 for i in range(0, 101, 10)],
-                     'MA' : [0.10, 0.15, 0.20],
-                     'te' : [0.15, 0.20, 0.30],
-                     'alfa' : [0.20, 0.30, 0.50],
-                     'ft' : [0.15, 0.30, 0.45]
-                }
+                     'MA' : [0.10, 0.20, 0.30],
+                     'te' : [0.15, 0.25, 0.35],
+                     'alfa' : [0.50],
+                     'ft' : [0.20, 0.25, 0.30]
+                     }
         experiment1 = Experiment(instance, exp_design)
         df1 = experiment1.df_results            
-    
+    df1["scaled_profit"] = (df1["OF_value"] - df1["OF_value"].min()) /(df1["OF_value"].max() -df1["OF_value"].min())
     # Define colors 
     pallete = px.colors.qualitative.Dark24
     n_colors = len(pallete)
@@ -150,7 +150,7 @@ def EDA_graph(instance,
                  'te': "recovery rate"}
     plot_varX = list(dict_varX.keys())
 
-    dict_varY = {'OF_value': 'System profit', 
+    dict_varY = {'scaled_profit': 'Scaled system profit', 
                  'goal_ratio': "Goal Achivement"}
     plot_varY = list(dict_varY.keys())
 
@@ -272,7 +272,9 @@ def graph_case_dv_vma(instance, results_path = None):
     else:
         exp_design= {'ind_income': [0, 1],
             'vma' :[200000, 30000, 450000, 500000],
-             'vd' : [i/100 for i in range(0, 101, 1)]
+             'vd' : [i/100 for i in range(0, 101, 1)],
+             'MA' : [0.20],
+             'te' : [0.30],
               }
         experiment1 = Experiment(instance, exp_design)
         df1 = experiment1.df_results 
