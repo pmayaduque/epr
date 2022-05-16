@@ -57,8 +57,8 @@ class Experiment:
         
         # Calculate extra columns
         self.df_results['goal_ratio'] = self.df_results['goal_ratio'].astype(float)
-        self.df_results['%income_vd'] = (100*(self.df_results['income_vd']/self.df_results['income'])).astype(float)
-        self.df_results['%income_vma'] = (100*(self.df_results['income_vma']/self.df_results['income'])).astype(float)
+        self.df_results['%income_vd'] = round((100*(self.df_results['income_vd']/self.df_results['income'])).astype(float), 1)
+        self.df_results['%income_vma'] = round((100*(self.df_results['income_vma']/self.df_results['income'])).astype(float), 1)
         
         
     def graph_goalAchiv(self, filepath=None):

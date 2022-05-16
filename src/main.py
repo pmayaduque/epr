@@ -66,11 +66,12 @@ exp_design= {'vma' :[500000],
              'vd' : [0.4],
              'MA' : [0.15],
              'te' : [0.20],
-             'alfa' : [0.1]
+             'alfa' : [i/100 for i in range(0, 101, 1)]
                 }
 experiment1 = experiments.Experiment(instance, exp_design)
 df1 = experiment1.df_results 
 df1.to_csv("alfa_ft.csv", index=False)
 
-
+fig = px.line(df1, x='alfa', y ="goal_ratio")
+pio.write_html(fig, file='temp.html') 
  

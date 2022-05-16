@@ -278,27 +278,27 @@ class Results():
         self.solution = {}
         if termination['Temination Condition'] == 'optimal':
             self.solution['temination'] = 'optimal'
-            self.solution['OF_value'] = instance.obj_funct.expr()
-            self.solution['income'] = value(instance.Income)
-            self.solution['income_vma'] = value(instance.vma)*(1+value(instance.ft))*(1 - value(instance.tr))*(
+            self.solution['OF_value'] = round(instance.obj_funct.expr(), 1)
+            self.solution['income'] = round(value(instance.Income), 1)
+            self.solution['income_vma'] = round(value(instance.vma)*(1+value(instance.ft))*(1 - value(instance.tr))*(
                 sum(value(instance.x[i,j,k]) for i in instance.ZONES for k in instance.TRANSFORMERS for j in instance.COLLECTIONS)
-                ) 
-            self.solution['income_vd'] = value(instance.Income) - self.solution['income_vma']
-            self.solution['cost_infraest'] = value(instance.InfrasCost)
-            self.solution['cost_transport'] = value(instance.TranspCost)
-            self.solution['cost_acquis'] = value(instance.AcquisCost)
-            self.solution['cost_transf'] = value(instance.TransfCost)            
+                ), 1)
+            self.solution['income_vd'] = round(value(instance.Income) - self.solution['income_vma'], 1)
+            self.solution['cost_infraest'] = round(value(instance.InfrasCost), 1)
+            self.solution['cost_transport'] = round(value(instance.TranspCost), 1)
+            self.solution['cost_acquis'] = round(value(instance.AcquisCost), 1)
+            self.solution['cost_transf'] = round(value(instance.TransfCost), 1)            
             self.solution['y'] = [(key, value) for key, value in instance.y.get_values().items() if value > 0]
             self.solution['z'] = [(key, value) for key, value in instance.z.get_values().items() if value > 0]
             self.solution['x'] = [(key, value) for key, value in instance.x.get_values().items() if value > 0]
             #self.solution['w'] = [(key, value) for key, value in instance.w.get_values().items() if value > 0]
             self.solution['R'] = instance.R.get_values()
-            self.solution['Rmax'] = max(instance.R.get_values().values()) 
-            self.solution['Rmin'] = min(instance.R.get_values().values())
+            self.solution['Rmax'] = round(max(instance.R.get_values().values()), 3)
+            self.solution['Rmin'] = round(min(instance.R.get_values().values()), 3)
             self.solution['Q_coll'] = sum(v for v in instance.x.get_values().values())
             self.solution['Q_transf'] = self.solution['Q_coll']*value(1-instance.tr)
             ratio = lambda x : float(self.solution['Q_transf']/x) if (x > 0 ) else 1 
-            self.solution['goal_ratio'] = ratio(self.instance_data['goalQ'])
+            self.solution['goal_ratio'] = round(ratio(self.instance_data['goalQ']), 3)
         else:
             self.solution['temination'] = 'no-optimal'
             self.solution['OF_value'] = None
