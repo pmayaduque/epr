@@ -43,9 +43,14 @@ def read_data(data_path):
     TRANSF_OUT = [k for k, v in data_read['TT'].items() if v[0]==0]
     data_read['TRANSF_IN'] = {None: TRANSF_IN} 
     data_read['TRANSF_OUT'] = {None: TRANSF_OUT} 
+    # Area an capacity for facilities
+    data_read['CAP'] = {k : v[1] for k, v in data_read['data_inf'].items()}
+    data_read['area'] = {k : v[0] for k, v in data_read['data_inf'].items()}
     # Create capacity for outsource facilities
     data_read['collect_out_cap'] = {k : v[1] for k, v in data_read['TA'].items() if v[0]==0}
     data_read['transfer_out_cap'] = {k : v[1] for k, v in data_read['TT'].items() if v[0]==0}
+    
+    
     data_model = {None: data_read }
     #data_model[None] = data_read
     
