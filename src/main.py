@@ -54,13 +54,16 @@ pio.write_html(fig, file='temp.html')
 fig = experiments.overview_dv_mva(instance, r"../output_files/EDA_large.csv")
 pio.write_html(fig, file='temp.html')  
 
-'''
+
 
 
 # A particular case vd vs vma
 fig = experiments.graph_case_dv_vma(instance, r"../output_files/vma_vd.csv")
 pio.write_html(fig, file='temp.html')  
+'''
 
+experiment1 = Experiment(instance, exp_design)
+df1 = experiment1.df_results  
 
 # Experiments capacity
 
@@ -72,16 +75,8 @@ exp_design= {'vma' :[500000],
              'CAP' : [{"1": 0.38, "2": 0.76, "3": 1.14, "4": 1.52, "5": 1.90, "6": 2.28}]
                 }
 
-exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
-                     'vd' : [i/100 for i in range(0, 101, 1)],
-                     'MA' : [0.20],
-                     'te' : [0.30],
-                     'alfa' : [ 0.50],
-                     'ft' : [0.25]
-                }   
-experiment1 = experiments.Experiment(instance, exp_design)
-df1 = experiment1.df_results 
-df1.to_csv("vma_vd.csv", index=False)
+
+
 
 df1["scaled_profit"] = (df1["OF_value"] - df1["OF_value"].min()) /(df1["OF_value"].max() -df1["OF_value"].min())
 fig = px.line(df1, x='ind_income', y ="scaled_profit")
