@@ -139,12 +139,12 @@ def create_model():
     # Binary relation between opened facilities 
 
     def flow_rule1(model,i,j,k):
-        return model.x[i,j,k] <= sum(model.genQ[i]*model.te for i in model.ZONES) *sum(model.y[j,m] for m in model.SIZES)
+        return model.x[i,j,k] <= model.genQ[i]*model.te *sum(model.y[j,m] for m in model.SIZES)
         #return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) *sum(model.y[j,m] for m in model.SIZES)
     model.flow1 = Constraint(model.ZONES, model.COLLECT_IN, model.TRANSFORMERS,rule = flow_rule1)
     
     def flow_rule2(model,i,j,k):
-        return model.x[i,j,k] <= sum(model.genQ[i]*model.te for i in model.ZONES) * sum(model.z[k,m] for m in model.SIZES)
+        return model.x[i,j,k] <= genQ[i]*model.te * sum(model.z[k,m] for m in model.SIZES)
         #return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) * sum(model.z[k,m] for m in model.SIZES)
     model.flow2 = Constraint(model.ZONES, model.COLLECTIONS, model.TRANSF_IN, rule = flow_rule2)
     
@@ -165,14 +165,14 @@ def create_model():
     # Collection capacity
     def coll_cap_rule1(model, j):
         return (
-                sum(model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS )
+                sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS )
                 <= sum(model.CAP[s]*model.y[j,s] for s in model.SIZES)
                 )
     model.coll_cap_rule1 = Constraint(model.COLLECT_IN, rule=coll_cap_rule1)
 
     def coll_cap_rule2(model, j):
         return (
-                sum(model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS )
+                sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES for k in model.TRANSFORMERS )
                 <= model.collect_out_cap[j]
                 )
     model.coll_cap_rule2 = Constraint(model.COLLECT_OUT, rule=coll_cap_rule2)
