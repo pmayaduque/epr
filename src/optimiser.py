@@ -92,13 +92,7 @@ def create_model():
                 ) == model.InfrasCost
     model.cost_or = Constraint(rule=open_cost_rule)
     
-    # Transport cost
-    def transport_cost_rule(model):
-        return (
-                sum((1 - model.tr) * model.x[i,j,k] * model.ct[j,k] 
-                    for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS) 
-                == model.TranspCost)
-    model.ct_tranportCost = Constraint(rule=transport_cost_rule)
+
     
     # Acquisition cost 
     def acquisition_costs_rule(model):
@@ -108,6 +102,14 @@ def create_model():
                 (model.vma*(1+ model.epsilon))*(1+model.ft)*(sum((1-model.tr)*model.x[i,j,k] for i in model.ZONES  for j in model.COLLECT_OUT for k in model.TRANSF_OUT ))
                 == model.AcquisCost)
     model.ct_AcquisCost = Constraint(rule=acquisition_costs_rule)
+    
+    # Transport cost
+    def transport_cost_rule(model):
+        return (
+                sum((1 - model.tr) * model.x[i,j,k] * model.ct[j,k] 
+                    for i in model.ZONES  for j in model.COLLECT_IN for k in model.TRANSFORMERS) 
+                == model.TranspCost)
+    model.ct_tranportCost = Constraint(rule=transport_cost_rule)
     
     # Transformation cost 
     def transformation_costs_rule(model):
