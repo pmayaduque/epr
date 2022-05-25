@@ -146,7 +146,7 @@ def create_model():
     model.flow1 = Constraint(model.ZONES, model.COLLECT_IN, model.TRANSFORMERS,rule = flow_rule1)
     
     def flow_rule2(model,i,j,k):
-        return model.x[i,j,k] <= genQ[i]*model.te * sum(model.z[k,m] for m in model.SIZES)
+        return model.x[i,j,k] <= model.genQ[i]*model.te * sum(model.z[k,m] for m in model.SIZES)
         #return model.x[i,j,k] <= sum(model.QMR[i] for i in model.ZONES) * sum(model.z[k,m] for m in model.SIZES)
     model.flow2 = Constraint(model.ZONES, model.COLLECTIONS, model.TRANSF_IN, rule = flow_rule2)
     

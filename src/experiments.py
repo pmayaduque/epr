@@ -146,8 +146,7 @@ def EDA_graph(instance,
     # Create vars for the graph   
     dict_varX = {'vma': "Material value", 
                  'vd': "Deposit Value", 
-                 'MA': "Recovery goal", 
-                 'te': "recovery rate"}
+                 'ft': "trasnformation value"}
     plot_varX = list(dict_varX.keys())
 
     dict_varY = {'scaled_profit': 'Scaled system profit', 
@@ -179,6 +178,94 @@ def EDA_graph(instance,
     
     return fig 
 
+def EDAv2_graph(instance, 
+              results_path = None):
+    
+    if results_path != None:
+        try:
+            df1 = pd.read_csv(results_path)
+        except:
+            print("There is not a file with the given path")
+    else:
+        exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
+                     'vd' : [i/100 for i in range(0, 101, 10)],
+                     'alfa' : [0.50],
+                     "fop":  [0.7],
+                     'ft' : [0.10, 0.20, 0.30, 0.40, 0.5],
+                     "ind_income" : [0, 1]
+                     }
+        experiment1 = Experiment(instance, exp_design)
+        df1 = experiment1.df_results            
+    df1["scaled_profit"] = (df1["OF_value"] - df1["OF_value"].min()) /(df1["OF_value"].max() -df1["OF_value"].min())
+    # Define colors 
+    pallete = px.colors.qualitative.Dark24
+    n_colors = len(pallete)
+    trace = 0
+    
+    # Create vars for the graph   
+    dict_varX = {'vma': "Material value", 
+                 'vd': "Deposit Value"}
+    plot_varX = list(dict_varX.keys())
+
+    dict_varY = {'scaled_profit': 'Scaled system profit', 
+                 'goal_ratio': "Goal Achivement"}
+    plot_varY = list(dict_varY.keys())
+    
+    dict_group = {1: 'ORP keeps deposit ' ,
+                  0: 'ORP does not keep deposit' }
+    plot_group = list(df1['ind_income'].unique())
+
+    # Creates subplots container
+    fig = make_subplots(rows=len(dict_group), cols=len(plot_varX)*len(plot_varY),
+                       vertical_spacing= 0.25)
+    
+    # Creates each subplot
+    for i in plot_group:
+        df_filtered = df1[df1['ind_income']==i]
+        df_filtered["scaled_profit"] = (df_filtered["OF_value"] - df_filtered["OF_value"].min()) /(df_filtered["OF_value"].max() -df_filtered["OF_value"].min())
+        trace = 0
+        for j in range(len(plot_varY)):
+            for k in range(len(plot_varX)):
+                subfig = go.Box(x=df_filtered[plot_varX[k]], y=df_filtered[plot_varY[j]],
+                                    name=plot_varX[k],
+                                    marker_color=pallete[trace])
+                fig.append_trace(subfig, i+1, 2*(j)+(k+1))
+                trace += 1
+                trace = trace%n_colors
+    # Remove legends         
+    fig.update(layout_showlegend=False)
+
+    # set axis labels
+    for key,val in dict_group.items():
+        for j in range(len(plot_varY)):
+            for k in range(len(plot_varX)):        
+                fig.update_xaxes(title_text=dict_varX[plot_varX[k]], row = key+1, col = 2*(j)+(k+1))                
+            fig.update_yaxes(title_text=dict_varY[plot_varY[j]], row = key+1, col = 2*(j)+1)     
+            
+    annotations = {
+        'annotation1' : {
+            'xref': 'paper',  # we'll reference the paper which we draw plot
+            'yref': 'paper',  # we'll reference the paper which we draw plot
+            'x': 0.5,  # If we consider the x-axis as 100%, we will place it on the x-axis with how many %
+            'y': 1.1,  # If we consider the y-axis as 100%, we will place it on the y-axis with how many %
+            'text': 'ORP does not keep deposit',
+            'showarrow': False,
+            'font': {'size': 14, 'color': 'black'}
+        },    
+        'annotation2' : {
+            'xref': 'paper',  # we'll reference the paper which we draw plot
+            'yref': 'paper',  # we'll reference the paper which we draw plot
+            'x':0.5,  # If we consider the x-axis as 100%, we will place it on the x-axis with how many %
+            'y': 0.48,  # If we consider the y-axis as 100%, we will place it on the y-axis with how many %
+            'text': 'ORP keeps deposit',
+            'showarrow': False,
+            'font': {'size': 14, 'color': 'black'}
+        }
+    }
+    for v in annotations.values():    
+        fig.add_annotation(v)   
+    
+    return fig 
 
 def overview_dv_mva(instance, results_path = None):
     if results_path != None:
@@ -253,7 +340,7 @@ def overview_dv_mva(instance, results_path = None):
             'xref': 'paper',  # we'll reference the paper which we draw plot
             'yref': 'paper',  # we'll reference the paper which we draw plot
             'x': 1.1,  # If we consider the x-axis as 100%, we will place it on the x-axis with how many %
-            'y': 0.51,  # If we consider the y-axis as 100%, we will place it on the y-axis with how many %
+            'y': 0.48,  # If we consider the y-axis as 100%, we will place it on the y-axis with how many %
             'text': 'Recovery rate',
             'showarrow': False,
             'font': {'size': 14, 'color': 'black'}
