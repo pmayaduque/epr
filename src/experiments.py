@@ -8,6 +8,7 @@ Created on Wed May  4 09:21:13 2022
 import itertools
 import pandas as pd
 import optimiser as opt 
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -59,7 +60,10 @@ class Experiment:
         self.df_results['goal_ratio'] = self.df_results['goal_ratio'].astype(float)
         self.df_results['%income_vd'] = round((100*(self.df_results['income_vd']/self.df_results['income'])).astype(float), 1)
         self.df_results['%income_vma'] = round((100*(self.df_results['income_vma']/self.df_results['income'])).astype(float), 1)
-        
+        scaler_st = StandardScaler()
+        scaler_maxmin = MinMaxScaler()
+        self.df_results['std_profit'] =  scaler_st.fit_transform(self.df_results[['OF_value']])
+        self.df_results['maxmin_profit'] = scaler_maxmin.fit_transform(self.df_results[['OF_value']])
         
     def graph_goalAchiv(self, filepath=None):
         if filepath != None:

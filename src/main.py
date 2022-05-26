@@ -15,6 +15,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
 import pandas as pd
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
 
 
 # read data from file
@@ -24,16 +26,7 @@ data = read_data(data_filepath)
 model = opt.create_model()
 instance = model.create_instance(data)
 
-exp_design= {'vma' :[250000, 400000, 550000],
-                    'vd' : [10, 20, 30],
-                    'MA' : [0.10, 0.15, 0.20],
-                    'te' : [0.15, 0.20, 0.30],
-                    'alfa' : [0.50],
-                    'ft' : [0.15, 0.30, 0.45],
-                    "ind_income" : [0, 0.5, 1],
-}
-experiment1 = Experiment(instance, exp_design)
-df1 = experiment1.df_results  
+ 
 '''
 # Run instance from json data
 results, termination = opt.solve_instance(instance, 
@@ -45,13 +38,34 @@ model_results = opt.Results(instance, termination)
 
 # Print results
 print(model_results.solution)
-
+'''
 
  
         
 # Exploratory Analysis
 fig = experiments.EDAv2_graph(instance, r"../output_files/EDA1.csv")
 pio.write_html(fig, file='temp.html')
+
+
+# DOE
+exp_design= {'vma' :[250000, 400000, 550000],
+             'vd' : [0.25, 0.50, 0.75],
+             'MA' : [0.10, 0.20, 0.30],
+             'te' : [0.15, 0.25, 0.35],
+             'alfa' : [0.50],
+             'ft' : [0.20, 0.35, 0.50],
+             'ind_income':[0.25, 0.5, 0.75]
+            }             
+df1 = pd.read_csv(r"../output_files/DOE.csv")
+df1 = df1[df1['temination']!="no-optimal"]
+model1 = ols("goal_ratio ~ C(vma, Sum) + C(vd, Sum) + C(MA, Sum) + C(te, Sum) + C(ft, Sum) +C(ind_income, Sum)", data=df1).fit()
+model1_aov_table = sm.stats.anova_lm(model1, typ=3)
+model1_aov_table
+model2 = ols("std_profit ~ C(vma, Sum) + C(vd, Sum) + C(MA, Sum) + C(te, Sum) + C(ft, Sum) +C(ind_income, Sum) +C(vma, Sum)*C(te, Sum) + C(vd, Sum)*C(te, Sum) + C(MA, Sum)*C(te, Sum) + C(ft, Sum)*C(te, Sum)  +C(ind_income, Sum)*C(te, Sum)" , data=df1).fit()
+model2_aov_table = sm.stats.anova_lm(model2, typ=3)
+model2_aov_table
+
+
 '''
 # General overview
 fig = experiments.overview_dv_mva(instance, r"../output_files/EDA_large.csv")
