@@ -8,7 +8,6 @@ Created on Mon May  2 16:20:56 2022
 import requests
 import json 
 import ast
-import binsreg
 import pandas as pd
 
 def read_data(data_path):
