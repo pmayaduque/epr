@@ -8,7 +8,7 @@ Created on Mon May  2 16:08:29 2022
 import optimiser as opt ##Modelo normal
 from  pyomo.environ import *
 from utilities import read_data
-#from experiments import Experiment, EDA_graph, overview_dv_mva, graph_case_dv_vma
+from experiments import Experiment, EDA_graph, overview_dv_mva, graph_case_dv_vma
 import experiments
 import plotly.express as px
 import plotly.graph_objects as go
@@ -40,13 +40,20 @@ model_results = opt.Results(instance, termination)
 print(model_results.solution)
 '''
 
- 
+# EDA 
+exp_design= {'vma' :[i for i in range(250000, 500001, 50000)],
+             'vd' : [i/100 for i in range(0, 101, 10)],
+             'ind_income' : [i/100 for i in range(0, 101, 10)],
+             'MA' : [0.10, 0.20, 0.30],
+             'te' : [0.15, 0.25, 0.35],
+             'alfa' : [0.50],
+             'ft' : [0.20, 0.25, 0.30],
+             "fop":  [0.40, 0.60, 0.80],
+             }
+experiment1 = Experiment(instance, exp_design)
+df1 = experiment1.df_results  
+df1.to_csv("dea.csv" ,index=False)
         
-# Exploratory Analysis
-fig = experiments.EDAv2_graph(instance, r"../output_files/EDA1.csv")
-pio.write_html(fig, file='temp.html')
-
-
 # DOE
 exp_design= {'vma' :[250000, 400000, 550000],
              'vd' : [0.25, 0.50, 0.75],
@@ -105,4 +112,3 @@ df1["scaled_profit"] = (df1["OF_value"] - df1["OF_value"].min()) /(df1["OF_value
 fig = px.line(df1, x='ind_income', y ="scaled_profit")
 pio.write_html(fig, file='temp.html') 
  
-'''
