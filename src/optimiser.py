@@ -271,6 +271,7 @@ class Results():
         self.instance_data['alfa'] = value(instance.alfa)
         self.instance_data['epsilon'] = value(instance.epsilon)
         self.instance_data['ft'] = value(instance.ft)
+        self.instance_data['fop'] = value(instance.fop)
         self.instance_data['ec'] = value(instance.ec)
         self.instance_data['r_cc'] = [(k, value(v)) for k, v in instance.r_cc.items()]
         self.instance_data['r_tp'] = [(k, value(v)) for k, v in instance.r_tp.items()]
