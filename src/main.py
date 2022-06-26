@@ -52,29 +52,20 @@ exp_design= {'vma' :[250000, 400000, 550000],
              }
 experiment1 = Experiment(instance, exp_design)
 df1 = experiment1.df_results  
-df1.to_csv("DOE.csv" ,index=False)
-        
-# DOE
-exp_design= {'vma' :[250000, 400000, 550000],
-             'vd' : [0.25, 0.50, 0.75],
-             'MA' : [0.10, 0.20, 0.30],
-             'te' : [0.15, 0.25, 0.35],
-             'alfa' : [0.50],
-             'ft' : [0.20, 0.35, 0.50],
-             'ind_income':[0.25, 0.5, 0.75]
-            }             
+#df1.to_csv("DOE.csv" ,index=False)
+          
 df1 = pd.read_csv(r"../output_files/DOE.csv")
 df1 = df1[df1['temination']!="no-optimal"]
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 scaler_maxmin = MinMaxScaler()
-columns = ['vma', 'vd', 'MA', 'te', 'ft', 'ind_income']
+columns = ['vma', 'vd', 'MA', 'te', 'ft', 'fop', 'ind_income']
 for col in columns:    
     df1['maxmin_'+col] = scaler_maxmin.fit_transform(df1[[col]])
-model1 = ols("goal_ratio ~ C(maxmin_vma, Sum) + C(maxmin_vd, Sum) + C(maxmin_MA, Sum) + C(maxmin_te, Sum) + C(maxmin_ft, Sum) +C(maxmin_ind_income, Sum)", data=df1).fit()
+model1 = ols("goal_ratio ~ C(maxmin_vma, Sum) + C(maxmin_vd, Sum) + C(maxmin_MA, Sum) + C(maxmin_te, Sum) + C(maxmin_ft, Sum) + C(maxmin_fop, Sum) +C(maxmin_ind_income, Sum) + C(maxmin_ft, Sum)*C(maxmin_fop, Sum)", data=df1).fit()
 model1_aov_table = sm.stats.anova_lm(model1, typ=3)
 model1_aov_table
-model2 = ols("std_profit ~ C(maxmin_vma, Sum) + C(maxmin_vd, Sum) + C(maxmin_MA, Sum) + C(maxmin_te, Sum) + C(maxmin_ft, Sum) +C(maxmin_ind_income, Sum) + C(maxmin_vd, Sum)*C(maxmin_te, Sum) " , data=df1).fit()
+model2 = ols("std_profit ~ C(maxmin_vma, Sum) + C(maxmin_vd, Sum) + C(maxmin_MA, Sum) + C(maxmin_te, Sum) + C(maxmin_ft, Sum) + C(maxmin_fop, Sum) +C(maxmin_ind_income, Sum) + C(maxmin_vd, Sum)*C(maxmin_te, Sum) +  + C(maxmin_ft, Sum)*C(maxmin_fop, Sum)" , data=df1).fit()
 model2_aov_table = sm.stats.anova_lm(model2, typ=3)
 model2_aov_table
 
