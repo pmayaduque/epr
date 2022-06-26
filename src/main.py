@@ -85,6 +85,21 @@ df1 = experiment1.df_results
 df1 = pd.read_csv(r"../output_files/exp_ind_income.csv")
 df1 = df1[df1['temination']!="no-optimal"]
 
+# Run experiment for alpha
+exp_design= {'vma' :[550000],
+             'vd' : [0.25],
+             'alfa' : [i/100 for i in range(0, 101, 1)],
+             'MA' : [0.20],
+             'te' : [0.30],
+             'ind_income' : [0.75],
+             'ft' : [0.25],
+             "fop":  [0.60]
+             }
+experiment1 = Experiment(instance, exp_design)
+df1 = experiment1.df_results  
+df1 = pd.read_csv(r"../output_files/exp_ind_income.csv")
+df1 = df1[df1['temination']!="no-optimal"]
+
 '''
 # General overview
 fig = experiments.overview_dv_mva(instance, r"../output_files/EDA_large.csv")
