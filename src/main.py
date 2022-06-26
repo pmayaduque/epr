@@ -69,6 +69,18 @@ model2 = ols("std_profit ~ C(maxmin_vma, Sum) + C(maxmin_vd, Sum) + C(maxmin_MA,
 model2_aov_table = sm.stats.anova_lm(model2, typ=3)
 model2_aov_table
 
+# Run experiment for ind_income
+exp_design= {'vma' :[550000],
+             'vd' : [0.25],
+             'ind_income' : [i/100 for i in range(0, 101, 1)],
+             'MA' : [0.20],
+             'te' : [0.25],
+             'alfa' : [0.50],
+             'ft' : [0.25],
+             "fop":  [0.60]
+             }
+experiment1 = Experiment(instance, exp_design)
+df1 = experiment1.df_results  
 
 '''
 # General overview
