@@ -17,6 +17,7 @@ import plotly.io as pio
 import pandas as pd
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
 # read data from file
@@ -57,7 +58,7 @@ df1 = experiment1.df_results
 df1 = pd.read_csv(r"../output_files/DOE.csv")
 df1 = df1[df1['temination']!="no-optimal"]
 
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
 scaler_maxmin = MinMaxScaler()
 columns = ['vma', 'vd', 'MA', 'te', 'ft', 'fop', 'ind_income']
 for col in columns:    
@@ -81,6 +82,8 @@ exp_design= {'vma' :[550000],
              }
 experiment1 = Experiment(instance, exp_design)
 df1 = experiment1.df_results  
+df1 = pd.read_csv(r"../output_files/exp_ind_income.csv")
+df1 = df1[df1['temination']!="no-optimal"]
 
 '''
 # General overview

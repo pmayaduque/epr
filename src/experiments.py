@@ -418,6 +418,36 @@ def graph_case_dv_vma(instance, results_path = None):
     
     return fig
 
+def graph_indIncome(instance, results_path = None):
+    if results_path != None:
+       try:
+           df1 = pd.read_csv(results_path)
+       except:
+           print("There is not a file with the given path")
+    else:
+        exp_design= {'vma' :[550000],
+                     'vd' : [0.25],
+                     'ind_income' : [i/100 for i in range(0, 101, 1)],
+                     'MA' : [0.20],
+                     'te' : [0.30],
+                     'alfa' : [0.50],
+                     'ft' : [0.25],
+                     "fop":  [0.60]
+                     }
+        experiment1 = Experiment(instance, exp_design)
+        df1 = experiment1.df_results 
+    #scaler_maxmin = MinMaxScaler()
+    #columns = ['vma', 'vd', 'MA', 'te', 'ft', 'fop', 'ind_income']
+    #for col in columns:    
+        #df1['maxmin_'+col] = scaler_maxmin.fit_transform(df1[[col]])
+    #df1["scaled_profit"] = (df1["OF_value"] - df1["OF_value"].min()) /(df1["OF_value"].max() -df1["OF_value"].min())
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df1['ind_income'], y=df1['goal_ratio'],
+                        mode='lines',
+                        name='lines'))
+    return fig
+    
+
 # General overview vd vs vma
 df1 = pd.read_csv(r"../output_files/EDA.csv")
 #df1 = df1[(df1["MA"]==0.15) & (df1["MA"]==0.3)]
